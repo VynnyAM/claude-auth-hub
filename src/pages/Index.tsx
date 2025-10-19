@@ -57,6 +57,9 @@ const Index = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [isSelecting, setIsSelecting] = useState(false);
+  const [selectionStart, setSelectionStart] = useState({ x: 0, y: 0 });
+  const [selectionEnd, setSelectionEnd] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -239,23 +242,45 @@ const Index = () => {
         setSelectedElement(clicked.id);
       }
     } else {
+      // Iniciar seleção por arrastar
+      setIsSelecting(true);
+      setSelectionStart({ x, y });
+      setSelectionEnd({ x, y });
       setSelectedElement(null);
       setElements(elements.map(el => ({ ...el, selected: false })));
     }
   };
 
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const rect = canvasRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
     if (isDragging && selectedElement) {
-      const rect = canvasRef.current?.getBoundingClientRect();
-      if (!rect) return;
-      
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
       updateElement(selectedElement, { x: x - dragOffset.x, y: y - dragOffset.y });
+    } else if (isSelecting) {
+      setSelectionEnd({ x, y });
     }
   };
 
   const handleMouseUp = () => {
+    if (isSelecting) {
+      // Selecionar todos os elementos dentro do retângulo
+      const minX = Math.min(selectionStart.x, selectionEnd.x);
+      const maxX = Math.max(selectionStart.x, selectionEnd.x);
+      const minY = Math.min(selectionStart.y, selectionEnd.y);
+      const maxY = Math.max(selectionStart.y, selectionEnd.y);
+      
+      setElements(elements.map(el => {
+        if (el.type === 'relation') return el;
+        const isInside = el.x >= minX && el.x <= maxX && el.y >= minY && el.y <= maxY;
+        return { ...el, selected: isInside };
+      }));
+      
+      setIsSelecting(false);
+    }
     setIsDragging(false);
   };
 
@@ -582,7 +607,30 @@ const Index = () => {
         }
       }
     });
-  }, [elements, selectedElement]);
+
+    // Desenhar retângulo de seleção
+    if (isSelecting) {
+      ctx.strokeStyle = '#10b981';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([5, 5]);
+      ctx.strokeRect(
+        selectionStart.x,
+        selectionStart.y,
+        selectionEnd.x - selectionStart.x,
+        selectionEnd.y - selectionStart.y
+      );
+      ctx.setLineDash([]);
+      
+      // Preencher retângulo com transparência
+      ctx.fillStyle = 'rgba(16, 185, 129, 0.1)';
+      ctx.fillRect(
+        selectionStart.x,
+        selectionStart.y,
+        selectionEnd.x - selectionStart.x,
+        selectionEnd.y - selectionStart.y
+      );
+    }
+  }, [elements, selectedElement, isSelecting, selectionStart, selectionEnd]);
 
   const autoOrganize = () => {
     if (elements.length === 0) return;
@@ -838,7 +886,7 @@ const Index = () => {
 
             <div className="bg-card rounded-xl shadow-md p-4">
               <h3 className="font-medium text-foreground mb-3">Relações</h3>
-              <p className="text-xs text-muted-foreground mb-2">Ctrl + clique para selecionar</p>
+              <p className="text-xs text-muted-foreground mb-2">Arraste para selecionar ou Ctrl + clique</p>
               <div className="space-y-2 max-h-64 overflow-y-auto">
                 <Button
                   onClick={() => addRelation('children')}
