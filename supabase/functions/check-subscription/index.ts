@@ -49,36 +49,112 @@ serve(async (req) => {
     if (!user?.email) throw new Error("User not authenticated or email not available");
     logStep("User authenticated", { userId: user.id, email: user.email });
 
-    const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
+    // 1) Check database for manual or still-valid subscription before calling Stripe
+    const { data: dbSubscription } = await supabaseClient
+      .from('subscriptions')
+      .select('*')
+      .eq('user_id', user.id)
+      .single();
+
+    // Manual grants (temporary overrides)
+    const MANUAL_GRANTS: Record<string, { plan: 'standard' | 'premium'; days: number }> = {
+      'vrollsign@yahoo.com.br': { plan: 'standard', days: 30 },
+      'vrollsing@yahoo.com.br': { plan: 'standard', days: 30 }, // typo variant
+    };
+
+    const grant = MANUAL_GRANTS[String(user.email).toLowerCase()];
+    if (grant) {
+      const targetEnd = new Date(Date.now() + grant.days * 24 * 60 * 60 * 1000);
+      const currentEndMs = dbSubscription?.current_period_end
+        ? new Date(dbSubscription.current_period_end).getTime()
+        : 0;
+
+      if (
+        !dbSubscription ||
+        currentEndMs < targetEnd.getTime() ||
+        dbSubscription.status !== 'active' ||
+        dbSubscription.plan !== grant.plan
+      ) {
+        logStep('Applying manual grant', { email: user.email, plan: grant.plan, days: grant.days });
+        await supabaseClient
+          .from('subscriptions')
+          .update({
+            status: 'active',
+            plan: grant.plan,
+            current_period_end: targetEnd.toISOString(),
+          })
+          .eq('user_id', user.id);
+      }
+
+      const effectiveEnd = (() => {
+        if (dbSubscription?.current_period_end) {
+          const dbEndMs = new Date(dbSubscription.current_period_end).getTime();
+          return (dbEndMs >= targetEnd.getTime())
+            ? new Date(dbEndMs).toISOString()
+            : targetEnd.toISOString();
+        }
+        return targetEnd.toISOString();
+      })();
+
+      return new Response(
+        JSON.stringify({
+          subscribed: true,
+          plan: grant.plan,
+          status: 'active',
+          subscription_end: effectiveEnd,
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
+      );
+    }
+
+    // Respect an already-active DB subscription within its validity window
+    if (
+      dbSubscription?.status === 'active' &&
+      dbSubscription?.current_period_end &&
+      new Date(dbSubscription.current_period_end).getTime() > Date.now()
+    ) {
+      logStep('Keeping active DB subscription (no Stripe required)', {
+        plan: dbSubscription.plan,
+        end: dbSubscription.current_period_end,
+      });
+
+      return new Response(
+        JSON.stringify({
+          subscribed: true,
+          plan: dbSubscription.plan,
+          status: 'active',
+          subscription_end: dbSubscription.current_period_end,
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
+      );
+    }
+
+    // 2) Fallback to Stripe check
+    const stripe = new Stripe(stripeKey, { apiVersion: '2025-08-27.basil' });
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
-    
+
     if (customers.data.length === 0) {
-      logStep("No customer found, updating unsubscribed state");
-      
-      // Update subscription status in database
+      logStep('No Stripe customer found; setting inactive');
       await supabaseClient
         .from('subscriptions')
-        .update({ 
+        .update({
           status: 'inactive',
           plan: 'basic',
           stripe_customer_id: null,
           stripe_subscription_id: null,
-          current_period_end: null
+          current_period_end: null,
         })
         .eq('user_id', user.id);
-      
-      return new Response(JSON.stringify({ 
-        subscribed: false, 
-        plan: 'basic',
-        status: 'inactive' 
-      }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
-      });
+
+    
+      return new Response(
+        JSON.stringify({ subscribed: false, plan: 'basic', status: 'inactive' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
+      );
     }
 
     const customerId = customers.data[0].id;
-    logStep("Found Stripe customer", { customerId });
+    logStep('Found Stripe customer', { customerId });
 
     const subscriptions = await stripe.subscriptions.list({
       customer: customerId,

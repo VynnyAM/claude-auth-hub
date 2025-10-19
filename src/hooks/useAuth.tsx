@@ -127,16 +127,24 @@ export const useAuth = () => {
   const signOut = async () => {
     try {
       const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-      
+      if (error && !String((error as any).message || error).toLowerCase().includes('auth session missing')) {
+        throw error;
+      }
+
       toast({
         title: "Logout realizado",
         description: "Até logo!",
       });
     } catch (error: any) {
+      const msg = String(error?.message || error || "");
+      // Trate "Auth session missing" como sucesso idempotente
+      if (msg.toLowerCase().includes('auth session missing')) {
+        toast({ title: "Logout realizado", description: "Até logo!" });
+        return;
+      }
       toast({
         title: "Erro ao fazer logout",
-        description: error.message,
+        description: msg,
         variant: "destructive",
       });
     }
