@@ -153,8 +153,9 @@ export const useAuth = () => {
         description: "Até logo!",
       });
 
-      // Redireciona de forma confiável para a página de login
-      return; // navigation handled by caller
+      // Redireciona de forma confiável para a página de login (hard redirect)
+      window.location.assign('/auth');
+      return;
     } catch (error: any) {
       const msg = String(error?.message || error || "");
       // Trate "Auth session missing" como sucesso idempotente
@@ -162,7 +163,8 @@ export const useAuth = () => {
         setSession(null);
         setUser(null);
         toast({ title: "Logout realizado", description: "Até logo!" });
-        return; // navigation handled by caller
+        window.location.assign('/auth');
+        return;
       }
       toast({
         title: "Erro ao fazer logout",
