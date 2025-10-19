@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, Heart, Lock, Mail } from 'lucide-react';
+import { Users, Heart, Lock, Mail, Check, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -43,8 +43,110 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-green-50 flex items-center justify-center p-4">
-      <div className="max-w-6xl w-full grid md:grid-cols-2 gap-8 items-center">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-green-50 py-8 px-4">
+      <div className="max-w-7xl mx-auto space-y-8">
+        {/* Planos de Mensalidade */}
+        <div className="text-center space-y-4">
+          <h2 className="text-3xl md:text-4xl font-light text-slate-800">
+            Escolha seu Plano
+          </h2>
+          <p className="text-lg text-slate-600">
+            Ferramentas profissionais para psicólogos e terapeutas
+          </p>
+        </div>
+
+        <div className="grid md:grid-cols-3 gap-6 mb-8">
+          {/* Plano Básico */}
+          <div className="bg-card rounded-2xl shadow-lg p-6 border-2 border-border hover:border-primary/50 transition-all">
+            <div className="text-center mb-4">
+              <h3 className="text-2xl font-semibold text-foreground mb-2">Básico</h3>
+              <div className="flex items-baseline justify-center gap-1">
+                <span className="text-4xl font-bold text-primary">R$ 40</span>
+                <span className="text-muted-foreground">/mês</span>
+              </div>
+            </div>
+            <ul className="space-y-3 mb-6">
+              <li className="flex items-start gap-2">
+                <Check className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+                <span className="text-sm">Criar genogramas ilimitados</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <X className="w-5 h-5 text-muted-foreground flex-shrink-0 mt-0.5" />
+                <span className="text-sm text-muted-foreground">Salvar e carregar genogramas</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <X className="w-5 h-5 text-muted-foreground flex-shrink-0 mt-0.5" />
+                <span className="text-sm text-muted-foreground">Baixar imagens</span>
+              </li>
+            </ul>
+            <p className="text-xs text-center text-muted-foreground">
+              Ideal para começar a criar genogramas profissionais
+            </p>
+          </div>
+
+          {/* Plano Padrão - Destacado */}
+          <div className="bg-primary/5 rounded-2xl shadow-xl p-6 border-2 border-primary relative transform md:scale-105">
+            <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+              <span className="bg-primary text-primary-foreground px-4 py-1 rounded-full text-xs font-semibold">
+                MAIS POPULAR
+              </span>
+            </div>
+            <div className="text-center mb-4 mt-2">
+              <h3 className="text-2xl font-semibold text-foreground mb-2">Padrão</h3>
+              <div className="flex items-baseline justify-center gap-1">
+                <span className="text-4xl font-bold text-primary">R$ 50</span>
+                <span className="text-muted-foreground">/mês</span>
+              </div>
+            </div>
+            <ul className="space-y-3 mb-6">
+              <li className="flex items-start gap-2">
+                <Check className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+                <span className="text-sm font-medium">Criar genogramas ilimitados</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <Check className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+                <span className="text-sm font-medium">Salvar e carregar genogramas</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <Check className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+                <span className="text-sm font-medium">Baixar imagens em alta qualidade</span>
+              </li>
+            </ul>
+            <p className="text-xs text-center text-foreground font-medium">
+              Perfeito para profissionais que precisam salvar seus trabalhos
+            </p>
+          </div>
+
+          {/* Plano Premium */}
+          <div className="bg-card rounded-2xl shadow-lg p-6 border-2 border-border hover:border-primary/50 transition-all">
+            <div className="text-center mb-4">
+              <h3 className="text-2xl font-semibold text-foreground mb-2">Premium</h3>
+              <div className="flex items-baseline justify-center gap-1">
+                <span className="text-2xl font-bold text-muted-foreground">Em breve</span>
+              </div>
+            </div>
+            <ul className="space-y-3 mb-6">
+              <li className="flex items-start gap-2">
+                <Check className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+                <span className="text-sm">Todos os recursos do Padrão</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <Check className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+                <span className="text-sm">Recursos exclusivos em desenvolvimento</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <Check className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+                <span className="text-sm">Suporte prioritário</span>
+              </li>
+            </ul>
+            <p className="text-xs text-center text-muted-foreground">
+              Recursos avançados para máxima produtividade
+            </p>
+          </div>
+        </div>
+
+        {/* Formulário de Login/Cadastro */}
+        <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-8 items-center">
         <div className="text-center md:text-left space-y-6">
           <div className="flex items-center justify-center md:justify-start gap-3 mb-4">
             <Users className="w-12 h-12 text-primary" />
@@ -232,6 +334,7 @@ const Auth = () => {
               {isLogin ? 'Não tem conta? Criar uma agora' : 'Já tem conta? Fazer login'}
             </button>
           </div>
+        </div>
         </div>
       </div>
     </div>
