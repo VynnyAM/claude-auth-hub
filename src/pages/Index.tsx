@@ -250,24 +250,153 @@ const Index = () => {
       const from = elements.find(e => e.id === rel.from);
       const to = elements.find(e => e.id === rel.to);
       if (from && to) {
+        const midX = (from.x + to.x) / 2;
+        const midY = (from.y + to.y) / 2;
+        
         ctx.beginPath();
         ctx.moveTo(from.x, from.y);
-        ctx.lineTo(to.x, to.y);
         
         if (rel.relationType === 'marriage') {
           ctx.strokeStyle = '#4ade80';
           ctx.lineWidth = 3;
+          ctx.lineTo(to.x, to.y);
         } else if (rel.relationType === 'divorce') {
           ctx.strokeStyle = '#ef4444';
           ctx.lineWidth = 2;
+          ctx.lineTo(to.x, to.y);
+          ctx.stroke();
+          // Duas barras no meio
+          ctx.beginPath();
+          ctx.moveTo(midX - 5, midY - 10);
+          ctx.lineTo(midX - 5, midY + 10);
+          ctx.moveTo(midX + 5, midY - 10);
+          ctx.lineTo(midX + 5, midY + 10);
+        } else if (rel.relationType === 'separation') {
+          ctx.strokeStyle = '#ef4444';
+          ctx.lineWidth = 2;
+          ctx.lineTo(to.x, to.y);
+          ctx.stroke();
+          // Uma barra no meio
+          ctx.beginPath();
+          ctx.moveTo(midX, midY - 10);
+          ctx.lineTo(midX, midY + 10);
+        } else if (rel.relationType === 'living-together') {
+          ctx.strokeStyle = '#4ade80';
+          ctx.lineWidth = 2;
           ctx.setLineDash([5, 5]);
+          ctx.lineTo(to.x, to.y);
+        } else if (rel.relationType === 'distant') {
+          ctx.strokeStyle = '#94a3b8';
+          ctx.lineWidth = 1;
+          ctx.setLineDash([8, 8]);
+          ctx.lineTo(to.x, to.y);
         } else if (rel.relationType === 'conflict') {
           ctx.strokeStyle = '#f59e0b';
           ctx.lineWidth = 2;
-          ctx.setLineDash([10, 5]);
-        } else if (rel.relationType === 'close') {
+          // Linha ondulada
+          const segments = 8;
+          const amplitude = 8;
+          for (let i = 0; i <= segments; i++) {
+            const t = i / segments;
+            const x = from.x + (to.x - from.x) * t;
+            const y = from.y + (to.y - from.y) * t;
+            const offset = Math.sin(t * Math.PI * 4) * amplitude;
+            const angle = Math.atan2(to.y - from.y, to.x - from.x);
+            const perpX = x - Math.sin(angle) * offset;
+            const perpY = y + Math.cos(angle) * offset;
+            if (i === 0) ctx.moveTo(perpX, perpY);
+            else ctx.lineTo(perpX, perpY);
+          }
+        } else if (rel.relationType === 'breakup') {
+          ctx.strokeStyle = '#ef4444';
+          ctx.lineWidth = 3;
+          ctx.lineTo(to.x, to.y);
+          ctx.stroke();
+          // Múltiplas barras
+          ctx.beginPath();
+          for (let i = -10; i <= 10; i += 5) {
+            ctx.moveTo(midX + i, midY - 10);
+            ctx.lineTo(midX + i, midY + 10);
+          }
+        } else if (rel.relationType === 'very-close') {
           ctx.strokeStyle = '#8b5cf6';
-          ctx.lineWidth = 4;
+          ctx.lineWidth = 2;
+          // Três linhas paralelas
+          for (let offset = -3; offset <= 3; offset += 3) {
+            ctx.beginPath();
+            const angle = Math.atan2(to.y - from.y, to.x - from.x);
+            const perpX = -Math.sin(angle) * offset;
+            const perpY = Math.cos(angle) * offset;
+            ctx.moveTo(from.x + perpX, from.y + perpY);
+            ctx.lineTo(to.x + perpX, to.y + perpY);
+            ctx.stroke();
+          }
+          ctx.beginPath();
+        } else if (rel.relationType === 'fused-conflictual') {
+          ctx.strokeStyle = '#f59e0b';
+          ctx.lineWidth = 2;
+          // Três linhas onduladas
+          for (let offset = -3; offset <= 3; offset += 3) {
+            ctx.beginPath();
+            const segments = 8;
+            const amplitude = 6;
+            for (let i = 0; i <= segments; i++) {
+              const t = i / segments;
+              const x = from.x + (to.x - from.x) * t;
+              const y = from.y + (to.y - from.y) * t;
+              const waveOffset = Math.sin(t * Math.PI * 4) * amplitude;
+              const angle = Math.atan2(to.y - from.y, to.x - from.x);
+              const perpX = x - Math.sin(angle) * (waveOffset + offset);
+              const perpY = y + Math.cos(angle) * (waveOffset + offset);
+              if (i === 0) ctx.moveTo(perpX, perpY);
+              else ctx.lineTo(perpX, perpY);
+            }
+            ctx.stroke();
+          }
+          ctx.beginPath();
+        } else if (rel.relationType === 'alliance') {
+          ctx.strokeStyle = '#3b82f6';
+          ctx.lineWidth = 2;
+          // Duas linhas paralelas
+          const angle = Math.atan2(to.y - from.y, to.x - from.x);
+          for (let offset = -2; offset <= 2; offset += 4) {
+            ctx.beginPath();
+            const perpX = -Math.sin(angle) * offset;
+            const perpY = Math.cos(angle) * offset;
+            ctx.moveTo(from.x + perpX, from.y + perpY);
+            ctx.lineTo(to.x + perpX, to.y + perpY);
+            ctx.stroke();
+          }
+          ctx.beginPath();
+        } else if (rel.relationType === 'harmonic') {
+          ctx.strokeStyle = '#10b981';
+          ctx.lineWidth = 2;
+          ctx.lineTo(to.x, to.y);
+          ctx.stroke();
+          // Setas duplas
+          const angle = Math.atan2(to.y - from.y, to.x - from.x);
+          // Seta para 'to'
+          ctx.beginPath();
+          ctx.moveTo(to.x, to.y);
+          ctx.lineTo(to.x - 10 * Math.cos(angle - Math.PI / 6), to.y - 10 * Math.sin(angle - Math.PI / 6));
+          ctx.moveTo(to.x, to.y);
+          ctx.lineTo(to.x - 10 * Math.cos(angle + Math.PI / 6), to.y - 10 * Math.sin(angle + Math.PI / 6));
+          // Seta para 'from'
+          ctx.moveTo(from.x, from.y);
+          ctx.lineTo(from.x + 10 * Math.cos(angle - Math.PI / 6), from.y + 10 * Math.sin(angle - Math.PI / 6));
+          ctx.moveTo(from.x, from.y);
+          ctx.lineTo(from.x + 10 * Math.cos(angle + Math.PI / 6), from.y + 10 * Math.sin(angle + Math.PI / 6));
+        } else if (rel.relationType === 'vulnerable') {
+          ctx.strokeStyle = '#f97316';
+          ctx.lineWidth = 2;
+          ctx.lineTo(to.x, to.y);
+          ctx.stroke();
+          // Círculo no meio
+          ctx.beginPath();
+          ctx.arc(midX, midY, 6, 0, 2 * Math.PI);
+          ctx.fillStyle = '#ffffff';
+          ctx.fill();
+          ctx.strokeStyle = '#f97316';
         }
         
         ctx.stroke();
@@ -281,7 +410,12 @@ const Index = () => {
       ctx.lineWidth = element.selected ? 3 : 2;
       ctx.fillStyle = element.status === 'deceased' ? '#cbd5e1' : '#ffffff';
 
-      if (element.type === 'male') {
+      // Pessoa índice (quadrado preenchido)
+      if (element.type === 'index') {
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(element.x - 25, element.y - 25, 50, 50);
+        ctx.strokeRect(element.x - 25, element.y - 25, 50, 50);
+      } else if (element.type === 'male') {
         ctx.fillRect(element.x - 25, element.y - 25, 50, 50);
         ctx.strokeRect(element.x - 25, element.y - 25, 50, 50);
       } else if (element.type === 'female') {
@@ -297,8 +431,18 @@ const Index = () => {
         ctx.closePath();
         ctx.fill();
         ctx.stroke();
+      } else if (element.type === 'undefined') {
+        // Triângulo invertido para sexo indefinido
+        ctx.beginPath();
+        ctx.moveTo(element.x, element.y + 25);
+        ctx.lineTo(element.x + 25, element.y - 25);
+        ctx.lineTo(element.x - 25, element.y - 25);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
       }
 
+      // Status especiais
       if (element.status === 'deceased') {
         ctx.strokeStyle = '#ef4444';
         ctx.lineWidth = 3;
@@ -307,6 +451,53 @@ const Index = () => {
         ctx.lineTo(element.x + 20, element.y + 20);
         ctx.moveTo(element.x + 20, element.y - 20);
         ctx.lineTo(element.x - 20, element.y + 20);
+        ctx.stroke();
+      } else if (element.status === 'substance-abuse') {
+        // Linha preta embaixo do símbolo
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(element.x - 25, element.y + 30);
+        ctx.lineTo(element.x + 25, element.y + 30);
+        ctx.stroke();
+      } else if (element.status === 'adopted') {
+        // Linha pontilhada ao redor
+        ctx.setLineDash([5, 5]);
+        ctx.strokeStyle = '#8b5cf6';
+        ctx.lineWidth = 2;
+        if (element.type === 'male' || element.type === 'index') {
+          ctx.strokeRect(element.x - 28, element.y - 28, 56, 56);
+        } else if (element.type === 'female') {
+          ctx.beginPath();
+          ctx.arc(element.x, element.y, 28, 0, 2 * Math.PI);
+          ctx.stroke();
+        }
+        ctx.setLineDash([]);
+      } else if (element.status === 'stillborn') {
+        // Pequeno X
+        ctx.strokeStyle = '#ef4444';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(element.x - 10, element.y - 10);
+        ctx.lineTo(element.x + 10, element.y + 10);
+        ctx.moveTo(element.x + 10, element.y - 10);
+        ctx.lineTo(element.x - 10, element.y + 10);
+        ctx.stroke();
+      } else if (element.status === 'miscarriage') {
+        // Círculo preenchido pequeno
+        ctx.fillStyle = '#1e293b';
+        ctx.beginPath();
+        ctx.arc(element.x, element.y, 8, 0, 2 * Math.PI);
+        ctx.fill();
+      } else if (element.status === 'abortion') {
+        // X maior
+        ctx.strokeStyle = '#ef4444';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(element.x - 15, element.y - 15);
+        ctx.lineTo(element.x + 15, element.y + 15);
+        ctx.moveTo(element.x + 15, element.y - 15);
+        ctx.lineTo(element.x - 15, element.y + 15);
         ctx.stroke();
       }
 
@@ -474,13 +665,29 @@ const Index = () => {
                 >
                   🔺 Gravidez
                 </Button>
+                <Button
+                  onClick={() => addElement('index')}
+                  className="w-full bg-primary/10 hover:bg-primary/20 border-primary/30 text-primary"
+                  variant="outline"
+                  size="sm"
+                >
+                  ⬛ Pessoa Índice
+                </Button>
+                <Button
+                  onClick={() => addElement('undefined')}
+                  className="w-full bg-primary/10 hover:bg-primary/20 border-primary/30 text-primary"
+                  variant="outline"
+                  size="sm"
+                >
+                  🔻 Sexo Indefinido
+                </Button>
               </div>
             </div>
 
             <div className="bg-card rounded-xl shadow-md p-4">
               <h3 className="font-medium text-foreground mb-3">Relações</h3>
               <p className="text-xs text-muted-foreground mb-2">Shift + clique em 2 pessoas</p>
-              <div className="space-y-2">
+              <div className="space-y-2 max-h-64 overflow-y-auto">
                 <Button
                   onClick={() => addRelation('marriage')}
                   className="w-full bg-accent/10 hover:bg-accent/20 border-accent/30 text-accent"
@@ -498,20 +705,84 @@ const Index = () => {
                   Divórcio
                 </Button>
                 <Button
+                  onClick={() => addRelation('separation')}
+                  className="w-full bg-accent/10 hover:bg-accent/20 border-accent/30 text-accent"
+                  variant="outline"
+                  size="sm"
+                >
+                  Separação Conjugal
+                </Button>
+                <Button
+                  onClick={() => addRelation('living-together')}
+                  className="w-full bg-accent/10 hover:bg-accent/20 border-accent/30 text-accent"
+                  variant="outline"
+                  size="sm"
+                >
+                  Morando Junto
+                </Button>
+                <Button
+                  onClick={() => addRelation('distant')}
+                  className="w-full bg-accent/10 hover:bg-accent/20 border-accent/30 text-accent"
+                  variant="outline"
+                  size="sm"
+                >
+                  Distante
+                </Button>
+                <Button
                   onClick={() => addRelation('conflict')}
                   className="w-full bg-accent/10 hover:bg-accent/20 border-accent/30 text-accent"
                   variant="outline"
                   size="sm"
                 >
-                  Conflito
+                  Conflituoso
                 </Button>
                 <Button
-                  onClick={() => addRelation('close')}
+                  onClick={() => addRelation('breakup')}
                   className="w-full bg-accent/10 hover:bg-accent/20 border-accent/30 text-accent"
                   variant="outline"
                   size="sm"
                 >
-                  Relação Próxima
+                  Rompimento
+                </Button>
+                <Button
+                  onClick={() => addRelation('very-close')}
+                  className="w-full bg-accent/10 hover:bg-accent/20 border-accent/30 text-accent"
+                  variant="outline"
+                  size="sm"
+                >
+                  Muito Estreito
+                </Button>
+                <Button
+                  onClick={() => addRelation('fused-conflictual')}
+                  className="w-full bg-accent/10 hover:bg-accent/20 border-accent/30 text-accent"
+                  variant="outline"
+                  size="sm"
+                >
+                  Fundido e Conflitual
+                </Button>
+                <Button
+                  onClick={() => addRelation('alliance')}
+                  className="w-full bg-accent/10 hover:bg-accent/20 border-accent/30 text-accent"
+                  variant="outline"
+                  size="sm"
+                >
+                  Aliança
+                </Button>
+                <Button
+                  onClick={() => addRelation('harmonic')}
+                  className="w-full bg-accent/10 hover:bg-accent/20 border-accent/30 text-accent"
+                  variant="outline"
+                  size="sm"
+                >
+                  Harmônico
+                </Button>
+                <Button
+                  onClick={() => addRelation('vulnerable')}
+                  className="w-full bg-accent/10 hover:bg-accent/20 border-accent/30 text-accent"
+                  variant="outline"
+                  size="sm"
+                >
+                  Vulnerável
                 </Button>
               </div>
             </div>
@@ -552,6 +823,11 @@ const Index = () => {
                       <SelectContent>
                         <SelectItem value="alive">Vivo</SelectItem>
                         <SelectItem value="deceased">Falecido</SelectItem>
+                        <SelectItem value="adopted">Adotivo</SelectItem>
+                        <SelectItem value="stillborn">Nascimento Morto</SelectItem>
+                        <SelectItem value="miscarriage">Aborto Espontâneo</SelectItem>
+                        <SelectItem value="abortion">Aborto Induzido</SelectItem>
+                        <SelectItem value="substance-abuse">Abuso de Substância</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
