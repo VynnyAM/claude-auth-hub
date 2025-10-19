@@ -85,14 +85,24 @@ const Index = () => {
   // Delete selected element with Delete key
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Delete' && selectedElement) {
+      if (e.key === 'Delete' && selectedElement !== null) {
+        const element = elements[selectedElement];
+        // Prevent deleting index person (male or female)
+        if (element?.type === 'index-male' || element?.type === 'index-female') {
+          toast({
+            title: "Pessoa Índice não pode ser excluída",
+            description: "A pessoa índice é o ponto central do genograma.",
+            variant: "destructive",
+          });
+          return;
+        }
         deleteElement();
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedElement]);
+  }, [selectedElement, elements]);
 
   const handleSubscribe = async (plan: 'basic' | 'standard') => {
     try {
