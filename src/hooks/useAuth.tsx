@@ -67,7 +67,7 @@ export const useAuth = () => {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (email: string, password: string, fullName: string, plan: 'basic' | 'standard' | 'premium' = 'basic') => {
+  const signUp = async (email: string, password: string, fullName: string, phone: string, plan: 'basic' | 'standard' | 'premium' = 'basic') => {
     try {
       const redirectUrl = `${window.location.origin}/`;
       
@@ -78,14 +78,23 @@ export const useAuth = () => {
           emailRedirectTo: redirectUrl,
           data: {
             full_name: fullName,
+            phone: phone,
           }
         }
       });
 
       if (error) throw error;
 
-      // Update subscription plan after user is created
+      // Update profile with phone and subscription plan after user is created
       if (data.user) {
+        await supabase
+          .from('profiles')
+          .update({ 
+            full_name: fullName,
+            phone: phone 
+          })
+          .eq('id', data.user.id);
+
         const { error: updateError } = await supabase
           .from('subscriptions')
           .update({ plan })
@@ -130,6 +139,30 @@ export const useAuth = () => {
     } catch (error: any) {
       toast({
         title: "Erro ao fazer login",
+        description: error.message,
+        variant: "destructive",
+      });
+      return { error };
+    }
+  };
+
+  const signInWithGoogle = async () => {
+    try {
+      const redirectUrl = `${window.location.origin}/`;
+      
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: redirectUrl,
+        },
+      });
+
+      if (error) throw error;
+      
+      return { error: null };
+    } catch (error: any) {
+      toast({
+        title: "Erro ao fazer login com Google",
         description: error.message,
         variant: "destructive",
       });
@@ -202,6 +235,7 @@ export const useAuth = () => {
     loading,
     signUp,
     signIn,
+    signInWithGoogle,
     signOut,
   };
 };
