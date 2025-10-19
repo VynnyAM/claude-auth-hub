@@ -68,7 +68,7 @@ const Auth = () => {
             <ul className="space-y-3 mb-6">
               <li className="flex items-start gap-2">
                 <Check className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
-                <span className="text-sm">Criar genogramas ilimitados</span>
+                <span className="text-sm">Criar apenas 1 genograma</span>
               </li>
               <li className="flex items-start gap-2">
                 <X className="w-5 h-5 text-muted-foreground flex-shrink-0 mt-0.5" />
@@ -213,7 +213,7 @@ const Auth = () => {
                     <ul className="space-y-1 text-sm">
                       <li className="flex items-center gap-2">
                         <span className="w-1.5 h-1.5 bg-primary rounded-full"></span>
-                        Criar genogramas ilimitados
+                        Criar apenas 1 genograma
                       </li>
                       <li className="flex items-center gap-2 text-muted-foreground line-through">
                         <span className="w-1.5 h-1.5 bg-muted-foreground rounded-full"></span>

@@ -38,11 +38,13 @@ export const useSubscription = (userId: string | undefined) => {
 
   const canDownload = subscription?.plan === 'standard' || subscription?.plan === 'premium';
   const canSaveLoad = subscription?.plan === 'standard' || subscription?.plan === 'premium';
+  const canCreateMultiple = subscription?.plan === 'standard' || subscription?.plan === 'premium';
 
   return {
     subscription,
     loading,
     canDownload,
     canSaveLoad,
+    canCreateMultiple,
   };
 };

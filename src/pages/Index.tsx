@@ -27,7 +27,7 @@ import { useSubscription } from '@/hooks/useSubscription';
 const Index = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading, signOut } = useAuth();
-  const { canDownload, canSaveLoad } = useSubscription(user?.id);
+  const { canDownload, canSaveLoad, canCreateMultiple } = useSubscription(user?.id);
   const { toast } = useToast();
   const { 
     genograms, 
@@ -59,6 +59,18 @@ const Index = () => {
   const handleLogout = async () => {
     await signOut();
     navigate('/auth');
+  };
+
+  const handleCreateNew = () => {
+    if (!canCreateMultiple && genograms.length >= 1) {
+      toast({
+        title: "Limite atingido",
+        description: "O plano Básico permite criar apenas 1 genograma. Faça upgrade para o plano Padrão para criar genogramas ilimitados.",
+        variant: "destructive",
+      });
+      return;
+    }
+    createNewGenogram();
   };
 
   const limparTela = () => {
@@ -328,12 +340,14 @@ const Index = () => {
               <h3 className="font-medium text-foreground mb-3">Gerenciar</h3>
               <div className="space-y-2">
                 <Button
-                  onClick={createNewGenogram}
+                  onClick={handleCreateNew}
                   className="w-full"
                   variant="outline"
                   size="sm"
+                  disabled={!canCreateMultiple && genograms.length >= 1}
                 >
-                  <Plus className="w-4 h-4 mr-2" />
+                  {!canCreateMultiple && genograms.length >= 1 && <Lock className="w-4 h-4 mr-2" />}
+                  {(canCreateMultiple || genograms.length < 1) && <Plus className="w-4 h-4 mr-2" />}
                   Novo Genograma
                 </Button>
                 <Button
