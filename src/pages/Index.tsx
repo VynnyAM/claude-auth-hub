@@ -1476,8 +1476,8 @@ const Index = () => {
                   <span className="text-sm text-muted-foreground">Salvar e carregar genogramas</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <X className="w-5 h-5 text-muted-foreground flex-shrink-0 mt-0.5" />
-                  <span className="text-sm text-muted-foreground">Baixar imagens</span>
+                  <Check className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+                  <span className="text-sm">Baixar imagens</span>
                 </li>
               </ul>
               {subscription?.plan !== 'basic' && (
@@ -1547,8 +1547,6 @@ const Index = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      
-      <AIChatbot />
     </div>
   );
 };
