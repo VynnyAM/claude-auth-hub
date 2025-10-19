@@ -683,12 +683,13 @@ const Index = () => {
 
     // Draw elements
     filteredElements.filter(e => e.type !== 'relation').forEach(element => {
-      // Reduce opacity for non-matching elements when searching
+      // Check if element is highlighted during search
       const isHighlighted = element.highlighted !== false;
       const hasSearch = searchTerm.trim().length > 0;
       
+      // Darken non-matching elements when searching
       if (hasSearch && !isHighlighted) {
-        ctx.globalAlpha = 0.3;
+        ctx.globalAlpha = 0.2;
       }
       
       ctx.strokeStyle = element.selected ? '#10b981' : '#64748b';
@@ -818,8 +819,69 @@ const Index = () => {
         ctx.stroke();
       }
 
-      if (element.name) {
+      // Reset global alpha after drawing element shape
+      ctx.globalAlpha = 1.0;
+      
+      // Draw highlight ring for searched elements
+      if (hasSearch && isHighlighted) {
+        ctx.strokeStyle = '#10b981';
+        ctx.lineWidth = 4;
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = '#10b981';
+        
+        if (element.type === 'male') {
+          ctx.strokeRect(element.x - 30, element.y - 30, 60, 60);
+        } else if (element.type === 'female') {
+          ctx.beginPath();
+          ctx.arc(element.x, element.y, 30, 0, 2 * Math.PI);
+          ctx.stroke();
+        } else if (element.type === 'pregnancy') {
+          ctx.beginPath();
+          ctx.moveTo(element.x, element.y - 30);
+          ctx.lineTo(element.x + 30, element.y + 30);
+          ctx.lineTo(element.x - 30, element.y + 30);
+          ctx.closePath();
+          ctx.stroke();
+        } else if (element.type === 'undefined') {
+          ctx.beginPath();
+          ctx.moveTo(element.x, element.y + 30);
+          ctx.lineTo(element.x + 30, element.y - 30);
+          ctx.lineTo(element.x - 30, element.y - 30);
+          ctx.closePath();
+          ctx.stroke();
+        } else if (element.type === 'twins') {
+          ctx.beginPath();
+          ctx.arc(element.x - 12, element.y, 25, 0, 2 * Math.PI);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.arc(element.x + 12, element.y, 25, 0, 2 * Math.PI);
+          ctx.stroke();
+        } else if (element.type === 'pet') {
+          ctx.beginPath();
+          const sides = 5;
+          const radius = 30;
+          for (let i = 0; i < sides; i++) {
+            const angle = (i * 2 * Math.PI) / sides - Math.PI / 2;
+            const x = element.x + radius * Math.cos(angle);
+            const y = element.y + radius * Math.sin(angle);
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+          }
+          ctx.closePath();
+          ctx.stroke();
+        }
+        
+        ctx.shadowBlur = 0;
+      }
+      
+      // Apply darker text for non-highlighted when searching
+      if (hasSearch && !isHighlighted) {
+        ctx.fillStyle = '#64748b';
+      } else {
         ctx.fillStyle = '#1e293b';
+      }
+      
+      if (element.name) {
         ctx.font = '12px Arial';
         ctx.textAlign = 'center';
         ctx.fillText(element.name, element.x, element.y + 45);
@@ -827,6 +889,9 @@ const Index = () => {
           ctx.fillText(element.age + ' anos', element.x, element.y + 60);
         }
       }
+      
+      // Reset alpha for next element
+      ctx.globalAlpha = 1.0;
     });
 
     // Desenhar retângulo de seleção
