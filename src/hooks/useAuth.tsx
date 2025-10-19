@@ -148,13 +148,25 @@ export const useAuth = () => {
       setSession(null);
       setUser(null);
 
+      // Remove possíveis tokens locais remanescentes
+      try {
+        const keysToRemove: string[] = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i) || '';
+          if (k.startsWith('sb-') || k.includes('supabase.auth.token')) {
+            keysToRemove.push(k);
+          }
+        }
+        keysToRemove.forEach((k) => localStorage.removeItem(k));
+      } catch {}
+
       toast({
         title: "Logout realizado",
         description: "Até logo!",
       });
 
       // Redireciona de forma confiável para a página de login (hard redirect)
-      window.location.assign('/auth');
+      window.location.replace('/auth');
       return;
     } catch (error: any) {
       const msg = String(error?.message || error || "");
@@ -162,8 +174,18 @@ export const useAuth = () => {
       if (msg.toLowerCase().includes('auth session missing')) {
         setSession(null);
         setUser(null);
+        try {
+          const keysToRemove: string[] = [];
+          for (let i = 0; i < localStorage.length; i++) {
+            const k = localStorage.key(i) || '';
+            if (k.startsWith('sb-') || k.includes('supabase.auth.token')) {
+              keysToRemove.push(k);
+            }
+          }
+          keysToRemove.forEach((k) => localStorage.removeItem(k));
+        } catch {}
         toast({ title: "Logout realizado", description: "Até logo!" });
-        window.location.assign('/auth');
+        window.location.replace('/auth');
         return;
       }
       toast({
