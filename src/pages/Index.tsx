@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, LogOut, Download, Send, Trash2, Users, Heart, Save, FolderOpen, Plus } from 'lucide-react';
+import { LogOut, Download, Trash2, Users, Save, FolderOpen, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -38,12 +38,10 @@ const Index = () => {
   } = useGenogram(user?.id);
 
   const [selectedElement, setSelectedElement] = useState<number | null>(null);
-  const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
   const [showClearModal, setShowClearModal] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [showLoadModal, setShowLoadModal] = useState(false);
   const [genogramTitle, setGenogramTitle] = useState('Novo Genograma');
-  const [whatsappNumber, setWhatsappNumber] = useState('');
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
@@ -253,30 +251,6 @@ const Index = () => {
     link.click();
   };
 
-  const sendWhatsApp = () => {
-    if (whatsappNumber) {
-      // Primeiro, baixa a imagem do genograma
-      const canvas = canvasRef.current;
-      if (canvas) {
-        const url = canvas.toDataURL('image/png');
-        const link = document.createElement('a');
-        link.download = 'genograma-familiar.png';
-        link.href = url;
-        link.click();
-      }
-      
-      // Depois abre o WhatsApp com mensagem cordial
-      const cleanNumber = whatsappNumber.replace(/\D/g, '');
-      const message = encodeURIComponent("Olá! Espero que esteja bem. Segue em anexo o genograma familiar que preparei para você. A imagem foi baixada automaticamente - basta anexá-la aqui no chat. Qualquer dúvida, estou à disposição!");
-      
-      // Pequeno delay para garantir que o download iniciou antes de abrir o WhatsApp
-      setTimeout(() => {
-        window.open(`https://wa.me/55${cleanNumber}?text=${message}`, '_blank');
-        setShowWhatsAppModal(false);
-        setWhatsappNumber('');
-      }, 500);
-    }
-  };
 
   const handleSave = async () => {
     await saveGenogram(genogramTitle);
@@ -493,15 +467,6 @@ const Index = () => {
                   <Download className="w-4 h-4 mr-2" />
                   Baixar Imagem
                 </Button>
-                <Button
-                  onClick={() => setShowWhatsAppModal(true)}
-                  className="w-full bg-muted/50 hover:bg-muted border-muted-foreground/30"
-                  variant="outline"
-                  size="sm"
-                >
-                  <Send className="w-4 h-4 mr-2" />
-                  Enviar para Cliente
-                </Button>
               </div>
             </div>
           </div>
@@ -538,31 +503,6 @@ const Index = () => {
             </Button>
             <Button variant="destructive" onClick={limparTela}>
               Limpar Tudo
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={showWhatsAppModal} onOpenChange={setShowWhatsAppModal}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Enviar Genograma</DialogTitle>
-            <DialogDescription>
-              Digite o número do WhatsApp do cliente (com DDD):
-            </DialogDescription>
-          </DialogHeader>
-          <Input
-            type="tel"
-            value={whatsappNumber}
-            onChange={(e) => setWhatsappNumber(e.target.value)}
-            placeholder="(11) 99999-9999"
-          />
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowWhatsAppModal(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={sendWhatsApp}>
-              Enviar pelo WhatsApp
             </Button>
           </DialogFooter>
         </DialogContent>
