@@ -33,6 +33,13 @@ export const useAuth = () => {
           setTimeout(() => {
             checkSubscription();
           }, 0);
+        } else {
+          // Force redirect to login when signed out (robust for published domain)
+          setTimeout(() => {
+            if (window.location.pathname !== '/auth') {
+              window.location.assign('/auth');
+            }
+          }, 0);
         }
       }
     );
@@ -47,6 +54,12 @@ export const useAuth = () => {
       if (session) {
         setTimeout(() => {
           checkSubscription();
+        }, 0);
+      } else {
+        setTimeout(() => {
+          if (window.location.pathname !== '/auth') {
+            window.location.assign('/auth');
+          }
         }, 0);
       }
     });
