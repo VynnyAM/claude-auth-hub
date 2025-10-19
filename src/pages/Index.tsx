@@ -24,6 +24,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useGenogram, GenogramElement } from '@/hooks/useGenogram';
 import { useSubscription } from '@/hooks/useSubscription';
 import { supabase } from '@/integrations/supabase/client';
+import { AIChatbot } from '@/components/AIChatbot';
 
 const PRICE_IDS = {
   basic: 'price_1SJs8NBOrcC2OeBV6wUbq4o4',
@@ -1355,6 +1356,8 @@ const Index = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      
+      <AIChatbot />
     </div>
   );
 };
