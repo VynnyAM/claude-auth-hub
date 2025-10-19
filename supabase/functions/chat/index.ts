@@ -34,6 +34,8 @@ CONHECIMENTO SOBRE GENOGRAMAS PSICOLÓGICOS:
    - Aborto Induzido: X maior
    - Natimorto: X pequeno dentro do símbolo
    - Adoção: Linha pontilhada ao redor do símbolo
+   - Gêmeos: Símbolos conectados
+   - Animal de Estimação: Pentágono ou diamante
 
 2. ESTADOS E CONDIÇÕES:
    - Falecido: X sobre o símbolo
@@ -53,46 +55,59 @@ CONHECIMENTO SOBRE GENOGRAMAS PSICOLÓGICOS:
    - Relação Harmônica: Linha com setas duplas ↔
    - Relação Vulnerável: Linha com círculo no meio
    - Filhos: Linha vertical descendo do meio da linha de união dos pais
+   - Abuso Físico: Linha com espinhos/triângulos
+   - Abuso Emocional: Linha ondulada tracejada
+   - Cuidador/Dependente: Linha com seta unidirecional
+   - Hostilidade: Linha com X's
+   - Manipulação: Linha espiral
 
 CÓDIGO ATUAL DO PROJETO:
 
 O projeto usa React com Canvas HTML5 para desenhar genogramas. Atualmente tem:
 
 PESSOAS (em src/pages/Index.tsx, função addElement):
-- 'male': Masculino (quadrado)
-- 'female': Feminino (círculo)
-- 'pregnancy': Gravidez (triângulo)
-- 'index': Pessoa Índice (quadrado preenchido)
-- 'undefined': Sexo Indefinido (triângulo invertido)
+- 'male': Masculino (quadrado azul)
+- 'female': Feminino (círculo rosa)
+- 'index': Pessoa Índice Masculina (quadrado roxo preenchido com borda dupla)
+- 'index-female': Pessoa Índice Feminina (círculo roxo preenchido com borda dupla)
+- 'pregnancy': Gravidez (triângulo amarelo)
+- 'undefined': Sexo Indefinido (triângulo invertido cinza)
+- 'twins': Gêmeos (dois círculos conectados ciano)
+- 'pet': Animal de Estimação (pentágono verde)
 
 STATUS (propriedade status do elemento):
 - 'alive': Vivo (padrão)
 - 'deceased': Falecido (X vermelho)
 - 'substance-abuse': Abuso de Substâncias (linha preta embaixo)
-- 'adopted': Adotado (linha pontilhada)
+- 'adopted': Adotado (linha pontilhada roxa)
 - 'stillborn': Natimorto (X pequeno)
 - 'miscarriage': Aborto Espontâneo (círculo pequeno preenchido)
 - 'abortion': Aborto Induzido (X maior)
 
 RELAÇÕES (em src/pages/Index.tsx, função addRelation):
-- 'marriage': Casamento (linha verde sólida)
+- 'children': Filhos (linha verde - 2 pais + filhos)
+- 'marriage': Casamento (linha verde esmeralda sólida)
 - 'divorce': Divórcio (linha vermelha com 2 barras)
-- 'separation': Separação (linha vermelha com 1 barra)
-- 'living-together': Morando Junto (linha verde tracejada)
+- 'separation': Separação (linha laranja com 1 barra)
+- 'living-together': Morando Junto (linha verde água tracejada)
 - 'distant': Distante (linha cinza pontilhada)
-- 'conflict': Conflituoso (linha laranja ondulada)
-- 'breakup': Rompimento (linha vermelha com múltiplas barras)
+- 'conflict': Conflituoso (linha âmbar ondulada)
+- 'breakup': Rompimento (linha rosa com múltiplas barras)
 - 'very-close': Muito Estreito (3 linhas roxas paralelas)
-- 'fused-conflictual': Fundido e Conflitual (3 linhas onduladas laranjas)
+- 'fused-conflictual': Fundido e Conflitual (3 linhas amarelas onduladas)
 - 'alliance': Aliança (2 linhas azuis paralelas)
-- 'harmonic': Harmônico (linha verde com setas duplas)
-- 'vulnerable': Vulnerável (linha laranja com círculo)
-- 'children': Filhos (linha vertical verde)
+- 'harmonic': Harmônico (linha lima com setas duplas)
+- 'vulnerable': Vulnerável (linha laranja escuro com círculo)
+- 'physical-abuse': Abuso Físico (linha vermelha escura com espinhos)
+- 'emotional-abuse': Abuso Emocional (linha violeta ondulada tracejada)
+- 'caregiver': Cuidador/Dependente (linha azul céu com seta)
+- 'hostility': Hostilidade (linha vermelha com X's)
+- 'manipulation': Manipulação (linha índigo espiral)
 
 SUAS RESPONSABILIDADES:
 
 1. Quando perguntado sobre pessoas ou relações:
-   - Explique o que cada símbolo significa
+   - Explique o que cada símbolo significa com suas cores
    - Compare com os padrões internacionais de genogramas
    - Sugira melhorias ou adições baseadas na teoria
    - Identifique o que está faltando ou pode ser melhorado
@@ -105,7 +120,8 @@ SUAS RESPONSABILIDADES:
 
 3. Sempre responda em português de forma clara e profissional.
 
-4. Se perguntado sobre o código, explique como está implementado atualmente.`;
+4. Se perguntado sobre o código, explique como está implementado atualmente com todas as cores e formas.`;
+
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",

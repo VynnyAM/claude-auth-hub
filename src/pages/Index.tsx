@@ -525,6 +525,96 @@ const Index = () => {
           ctx.fillStyle = '#ffffff';
           ctx.fill();
           ctx.strokeStyle = '#f97316';
+        } else if (rel.relationType === 'physical-abuse') {
+          ctx.strokeStyle = '#991b1b';
+          ctx.lineWidth = 3;
+          ctx.lineTo(to.x, to.y);
+          ctx.stroke();
+          // Linha com espinhos (triângulos ao longo da linha)
+          ctx.beginPath();
+          const numSpikes = 5;
+          for (let i = 0; i <= numSpikes; i++) {
+            const t = i / numSpikes;
+            const x = from.x + (to.x - from.x) * t;
+            const y = from.y + (to.y - from.y) * t;
+            const angle = Math.atan2(to.y - from.y, to.x - from.x);
+            const spikeLength = 8;
+            const perpX = x - Math.sin(angle) * spikeLength;
+            const perpY = y + Math.cos(angle) * spikeLength;
+            ctx.moveTo(x, y);
+            ctx.lineTo(perpX, perpY);
+          }
+          ctx.strokeStyle = '#991b1b';
+        } else if (rel.relationType === 'emotional-abuse') {
+          ctx.strokeStyle = '#5b21b6';
+          ctx.lineWidth = 2;
+          // Linha ondulada com traços
+          ctx.setLineDash([10, 5]);
+          const segments = 10;
+          const amplitude = 5;
+          for (let i = 0; i <= segments; i++) {
+            const t = i / segments;
+            const x = from.x + (to.x - from.x) * t;
+            const y = from.y + (to.y - from.y) * t;
+            const offset = Math.sin(t * Math.PI * 6) * amplitude;
+            const angle = Math.atan2(to.y - from.y, to.x - from.x);
+            const perpX = x - Math.sin(angle) * offset;
+            const perpY = y + Math.cos(angle) * offset;
+            if (i === 0) ctx.moveTo(perpX, perpY);
+            else ctx.lineTo(perpX, perpY);
+          }
+        } else if (rel.relationType === 'caregiver') {
+          ctx.strokeStyle = '#0284c7';
+          ctx.lineWidth = 2;
+          ctx.lineTo(to.x, to.y);
+          ctx.stroke();
+          // Seta apontando para o dependente (to)
+          const angle = Math.atan2(to.y - from.y, to.x - from.x);
+          ctx.beginPath();
+          ctx.moveTo(to.x, to.y);
+          ctx.lineTo(to.x - 15 * Math.cos(angle - Math.PI / 6), to.y - 15 * Math.sin(angle - Math.PI / 6));
+          ctx.moveTo(to.x, to.y);
+          ctx.lineTo(to.x - 15 * Math.cos(angle + Math.PI / 6), to.y - 15 * Math.sin(angle + Math.PI / 6));
+          ctx.strokeStyle = '#0284c7';
+        } else if (rel.relationType === 'hostility') {
+          ctx.strokeStyle = '#dc2626';
+          ctx.lineWidth = 3;
+          // Linha com X's ao longo
+          ctx.lineTo(to.x, to.y);
+          ctx.stroke();
+          ctx.beginPath();
+          const numX = 4;
+          for (let i = 1; i < numX; i++) {
+            const t = i / numX;
+            const x = from.x + (to.x - from.x) * t;
+            const y = from.y + (to.y - from.y) * t;
+            const size = 6;
+            ctx.moveTo(x - size, y - size);
+            ctx.lineTo(x + size, y + size);
+            ctx.moveTo(x + size, y - size);
+            ctx.lineTo(x - size, y + size);
+          }
+          ctx.strokeStyle = '#dc2626';
+        } else if (rel.relationType === 'manipulation') {
+          ctx.strokeStyle = '#4f46e5';
+          ctx.lineWidth = 2;
+          // Linha espiral
+          const spirals = 3;
+          const radius = 8;
+          for (let i = 0; i <= 100; i++) {
+            const t = i / 100;
+            const spiralT = t * spirals * Math.PI * 2;
+            const x = from.x + (to.x - from.x) * t;
+            const y = from.y + (to.y - from.y) * t;
+            const angle = Math.atan2(to.y - from.y, to.x - from.x);
+            const r = radius * (1 - t);
+            const offsetX = r * Math.cos(spiralT);
+            const offsetY = r * Math.sin(spiralT);
+            const perpX = x - Math.sin(angle) * offsetY + Math.cos(angle) * offsetX;
+            const perpY = y + Math.cos(angle) * offsetY + Math.sin(angle) * offsetX;
+            if (i === 0) ctx.moveTo(perpX, perpY);
+            else ctx.lineTo(perpX, perpY);
+          }
         }
         
         ctx.stroke();
@@ -538,35 +628,87 @@ const Index = () => {
       ctx.lineWidth = element.selected ? 3 : 2;
       ctx.fillStyle = element.status === 'deceased' ? '#cbd5e1' : '#ffffff';
 
-      // Pessoa índice (quadrado preenchido)
+      // Pessoa índice masculina (quadrado preenchido)
       if (element.type === 'index') {
-        ctx.fillStyle = '#1e293b';
+        ctx.fillStyle = '#7c3aed';
         ctx.fillRect(element.x - 25, element.y - 25, 50, 50);
+        ctx.strokeStyle = '#5b21b6';
+        ctx.lineWidth = 4;
         ctx.strokeRect(element.x - 25, element.y - 25, 50, 50);
-      } else if (element.type === 'male') {
-        ctx.fillRect(element.x - 25, element.y - 25, 50, 50);
-        ctx.strokeRect(element.x - 25, element.y - 25, 50, 50);
-      } else if (element.type === 'female') {
+        ctx.strokeRect(element.x - 22, element.y - 22, 44, 44);
+      } else if (element.type === 'index-female') {
+        // Pessoa índice feminina (círculo preenchido com borda dupla)
+        ctx.fillStyle = '#7c3aed';
         ctx.beginPath();
         ctx.arc(element.x, element.y, 25, 0, 2 * Math.PI);
         ctx.fill();
+        ctx.strokeStyle = '#5b21b6';
+        ctx.lineWidth = 4;
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(element.x, element.y, 22, 0, 2 * Math.PI);
+        ctx.stroke();
+      } else if (element.type === 'male') {
+        ctx.fillStyle = element.status === 'deceased' ? '#cbd5e1' : '#dbeafe';
+        ctx.fillRect(element.x - 25, element.y - 25, 50, 50);
+        ctx.strokeStyle = element.selected ? '#10b981' : '#3b82f6';
+        ctx.strokeRect(element.x - 25, element.y - 25, 50, 50);
+      } else if (element.type === 'female') {
+        ctx.fillStyle = element.status === 'deceased' ? '#cbd5e1' : '#fce7f3';
+        ctx.beginPath();
+        ctx.arc(element.x, element.y, 25, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.strokeStyle = element.selected ? '#10b981' : '#ec4899';
         ctx.stroke();
       } else if (element.type === 'pregnancy') {
+        ctx.fillStyle = '#fef3c7';
         ctx.beginPath();
         ctx.moveTo(element.x, element.y - 25);
         ctx.lineTo(element.x + 25, element.y + 25);
         ctx.lineTo(element.x - 25, element.y + 25);
         ctx.closePath();
         ctx.fill();
+        ctx.strokeStyle = element.selected ? '#10b981' : '#f59e0b';
         ctx.stroke();
       } else if (element.type === 'undefined') {
         // Triângulo invertido para sexo indefinido
+        ctx.fillStyle = '#f3f4f6';
         ctx.beginPath();
         ctx.moveTo(element.x, element.y + 25);
         ctx.lineTo(element.x + 25, element.y - 25);
         ctx.lineTo(element.x - 25, element.y - 25);
         ctx.closePath();
         ctx.fill();
+        ctx.strokeStyle = element.selected ? '#10b981' : '#6b7280';
+        ctx.stroke();
+      } else if (element.type === 'twins') {
+        // Gêmeos (dois círculos conectados)
+        ctx.fillStyle = '#cffafe';
+        ctx.beginPath();
+        ctx.arc(element.x - 12, element.y, 20, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.strokeStyle = element.selected ? '#10b981' : '#06b6d4';
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(element.x + 12, element.y, 20, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.stroke();
+      } else if (element.type === 'pet') {
+        // Animal de estimação (pentágono)
+        ctx.fillStyle = '#d1fae5';
+        ctx.beginPath();
+        const sides = 5;
+        const radius = 25;
+        for (let i = 0; i < sides; i++) {
+          const angle = (i * 2 * Math.PI) / sides - Math.PI / 2;
+          const x = element.x + radius * Math.cos(angle);
+          const y = element.y + radius * Math.sin(angle);
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = element.selected ? '#10b981' : '#10b981';
         ctx.stroke();
       }
 
@@ -593,7 +735,7 @@ const Index = () => {
         ctx.setLineDash([5, 5]);
         ctx.strokeStyle = '#8b5cf6';
         ctx.lineWidth = 2;
-        if (element.type === 'male' || element.type === 'index') {
+        if (element.type === 'male' || element.type === 'index' || element.type === 'index-female') {
           ctx.strokeRect(element.x - 28, element.y - 28, 56, 56);
         } else if (element.type === 'female') {
           ctx.beginPath();
@@ -872,10 +1014,10 @@ const Index = () => {
 
             <div className="bg-card rounded-xl shadow-md p-4">
               <h3 className="font-medium text-foreground mb-3">Adicionar Pessoa</h3>
-              <div className="space-y-2">
+              <div className="space-y-2 max-h-96 overflow-y-auto">
                 <Button
                   onClick={() => addElement('male')}
-                  className="w-full bg-primary/10 hover:bg-primary/20 border-primary/30 text-primary"
+                  className="w-full bg-blue-500/10 hover:bg-blue-500/20 border-blue-500/30 text-blue-700"
                   variant="outline"
                   size="sm"
                 >
@@ -883,35 +1025,59 @@ const Index = () => {
                 </Button>
                 <Button
                   onClick={() => addElement('female')}
-                  className="w-full bg-primary/10 hover:bg-primary/20 border-primary/30 text-primary"
+                  className="w-full bg-pink-500/10 hover:bg-pink-500/20 border-pink-500/30 text-pink-700"
                   variant="outline"
                   size="sm"
                 >
                   ⚪ Feminino
                 </Button>
                 <Button
+                  onClick={() => addElement('index')}
+                  className="w-full bg-purple-600/10 hover:bg-purple-600/20 border-purple-600/30 text-purple-700"
+                  variant="outline"
+                  size="sm"
+                >
+                  ⬛ Pessoa Índice (M)
+                </Button>
+                <Button
+                  onClick={() => addElement('index-female')}
+                  className="w-full bg-purple-600/10 hover:bg-purple-600/20 border-purple-600/30 text-purple-700"
+                  variant="outline"
+                  size="sm"
+                >
+                  ⚫ Pessoa Índice (F)
+                </Button>
+                <Button
                   onClick={() => addElement('pregnancy')}
-                  className="w-full bg-primary/10 hover:bg-primary/20 border-primary/30 text-primary"
+                  className="w-full bg-amber-500/10 hover:bg-amber-500/20 border-amber-500/30 text-amber-700"
                   variant="outline"
                   size="sm"
                 >
                   🔺 Gravidez
                 </Button>
                 <Button
-                  onClick={() => addElement('index')}
-                  className="w-full bg-primary/10 hover:bg-primary/20 border-primary/30 text-primary"
-                  variant="outline"
-                  size="sm"
-                >
-                  ⬛ Pessoa Índice
-                </Button>
-                <Button
                   onClick={() => addElement('undefined')}
-                  className="w-full bg-primary/10 hover:bg-primary/20 border-primary/30 text-primary"
+                  className="w-full bg-gray-500/10 hover:bg-gray-500/20 border-gray-500/30 text-gray-700"
                   variant="outline"
                   size="sm"
                 >
                   🔻 Sexo Indefinido
+                </Button>
+                <Button
+                  onClick={() => addElement('twins')}
+                  className="w-full bg-cyan-500/10 hover:bg-cyan-500/20 border-cyan-500/30 text-cyan-700"
+                  variant="outline"
+                  size="sm"
+                >
+                  👥 Gêmeos
+                </Button>
+                <Button
+                  onClick={() => addElement('pet')}
+                  className="w-full bg-emerald-500/10 hover:bg-emerald-500/20 border-emerald-500/30 text-emerald-700"
+                  variant="outline"
+                  size="sm"
+                >
+                  🐾 Animal de Estimação
                 </Button>
               </div>
             </div>
@@ -919,7 +1085,7 @@ const Index = () => {
             <div className="bg-card rounded-xl shadow-md p-4">
               <h3 className="font-medium text-foreground mb-3">Relações</h3>
               <p className="text-xs text-muted-foreground mb-2">Arraste para selecionar ou Ctrl + clique</p>
-              <div className="space-y-2 max-h-64 overflow-y-auto">
+              <div className="space-y-2 max-h-96 overflow-y-auto">
                 <Button
                   onClick={() => addRelation('children')}
                   className="w-full bg-green-500/10 hover:bg-green-500/20 border-green-500/30 text-green-700"
@@ -930,7 +1096,7 @@ const Index = () => {
                 </Button>
                 <Button
                   onClick={() => addRelation('marriage')}
-                  className="w-full bg-accent/10 hover:bg-accent/20 border-accent/30 text-accent"
+                  className="w-full bg-emerald-500/10 hover:bg-emerald-500/20 border-emerald-500/30 text-emerald-700"
                   variant="outline"
                   size="sm"
                 >
@@ -938,7 +1104,7 @@ const Index = () => {
                 </Button>
                 <Button
                   onClick={() => addRelation('divorce')}
-                  className="w-full bg-accent/10 hover:bg-accent/20 border-accent/30 text-accent"
+                  className="w-full bg-red-500/10 hover:bg-red-500/20 border-red-500/30 text-red-700"
                   variant="outline"
                   size="sm"
                 >
@@ -946,7 +1112,7 @@ const Index = () => {
                 </Button>
                 <Button
                   onClick={() => addRelation('separation')}
-                  className="w-full bg-accent/10 hover:bg-accent/20 border-accent/30 text-accent"
+                  className="w-full bg-orange-500/10 hover:bg-orange-500/20 border-orange-500/30 text-orange-700"
                   variant="outline"
                   size="sm"
                 >
@@ -954,7 +1120,7 @@ const Index = () => {
                 </Button>
                 <Button
                   onClick={() => addRelation('living-together')}
-                  className="w-full bg-accent/10 hover:bg-accent/20 border-accent/30 text-accent"
+                  className="w-full bg-teal-500/10 hover:bg-teal-500/20 border-teal-500/30 text-teal-700"
                   variant="outline"
                   size="sm"
                 >
@@ -962,7 +1128,7 @@ const Index = () => {
                 </Button>
                 <Button
                   onClick={() => addRelation('distant')}
-                  className="w-full bg-accent/10 hover:bg-accent/20 border-accent/30 text-accent"
+                  className="w-full bg-gray-500/10 hover:bg-gray-500/20 border-gray-500/30 text-gray-700"
                   variant="outline"
                   size="sm"
                 >
@@ -970,7 +1136,7 @@ const Index = () => {
                 </Button>
                 <Button
                   onClick={() => addRelation('conflict')}
-                  className="w-full bg-accent/10 hover:bg-accent/20 border-accent/30 text-accent"
+                  className="w-full bg-amber-500/10 hover:bg-amber-500/20 border-amber-500/30 text-amber-700"
                   variant="outline"
                   size="sm"
                 >
@@ -978,7 +1144,7 @@ const Index = () => {
                 </Button>
                 <Button
                   onClick={() => addRelation('breakup')}
-                  className="w-full bg-accent/10 hover:bg-accent/20 border-accent/30 text-accent"
+                  className="w-full bg-rose-500/10 hover:bg-rose-500/20 border-rose-500/30 text-rose-700"
                   variant="outline"
                   size="sm"
                 >
@@ -986,7 +1152,7 @@ const Index = () => {
                 </Button>
                 <Button
                   onClick={() => addRelation('very-close')}
-                  className="w-full bg-accent/10 hover:bg-accent/20 border-accent/30 text-accent"
+                  className="w-full bg-purple-500/10 hover:bg-purple-500/20 border-purple-500/30 text-purple-700"
                   variant="outline"
                   size="sm"
                 >
@@ -994,7 +1160,7 @@ const Index = () => {
                 </Button>
                 <Button
                   onClick={() => addRelation('fused-conflictual')}
-                  className="w-full bg-accent/10 hover:bg-accent/20 border-accent/30 text-accent"
+                  className="w-full bg-yellow-600/10 hover:bg-yellow-600/20 border-yellow-600/30 text-yellow-700"
                   variant="outline"
                   size="sm"
                 >
@@ -1002,7 +1168,7 @@ const Index = () => {
                 </Button>
                 <Button
                   onClick={() => addRelation('alliance')}
-                  className="w-full bg-accent/10 hover:bg-accent/20 border-accent/30 text-accent"
+                  className="w-full bg-blue-500/10 hover:bg-blue-500/20 border-blue-500/30 text-blue-700"
                   variant="outline"
                   size="sm"
                 >
@@ -1010,7 +1176,7 @@ const Index = () => {
                 </Button>
                 <Button
                   onClick={() => addRelation('harmonic')}
-                  className="w-full bg-accent/10 hover:bg-accent/20 border-accent/30 text-accent"
+                  className="w-full bg-lime-500/10 hover:bg-lime-500/20 border-lime-500/30 text-lime-700"
                   variant="outline"
                   size="sm"
                 >
@@ -1018,11 +1184,51 @@ const Index = () => {
                 </Button>
                 <Button
                   onClick={() => addRelation('vulnerable')}
-                  className="w-full bg-accent/10 hover:bg-accent/20 border-accent/30 text-accent"
+                  className="w-full bg-orange-600/10 hover:bg-orange-600/20 border-orange-600/30 text-orange-700"
                   variant="outline"
                   size="sm"
                 >
                   Vulnerável
+                </Button>
+                <Button
+                  onClick={() => addRelation('physical-abuse')}
+                  className="w-full bg-red-700/10 hover:bg-red-700/20 border-red-700/30 text-red-800"
+                  variant="outline"
+                  size="sm"
+                >
+                  Abuso Físico
+                </Button>
+                <Button
+                  onClick={() => addRelation('emotional-abuse')}
+                  className="w-full bg-violet-700/10 hover:bg-violet-700/20 border-violet-700/30 text-violet-800"
+                  variant="outline"
+                  size="sm"
+                >
+                  Abuso Emocional
+                </Button>
+                <Button
+                  onClick={() => addRelation('caregiver')}
+                  className="w-full bg-sky-500/10 hover:bg-sky-500/20 border-sky-500/30 text-sky-700"
+                  variant="outline"
+                  size="sm"
+                >
+                  Cuidador/Dependente
+                </Button>
+                <Button
+                  onClick={() => addRelation('hostility')}
+                  className="w-full bg-red-600/10 hover:bg-red-600/20 border-red-600/30 text-red-700"
+                  variant="outline"
+                  size="sm"
+                >
+                  Hostilidade
+                </Button>
+                <Button
+                  onClick={() => addRelation('manipulation')}
+                  className="w-full bg-indigo-600/10 hover:bg-indigo-600/20 border-indigo-600/30 text-indigo-700"
+                  variant="outline"
+                  size="sm"
+                >
+                  Manipulação
                 </Button>
               </div>
             </div>
