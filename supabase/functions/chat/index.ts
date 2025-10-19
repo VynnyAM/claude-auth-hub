@@ -68,7 +68,6 @@ O projeto usa React com Canvas HTML5 para desenhar genogramas. Atualmente tem:
 PESSOAS (em src/pages/Index.tsx, função addElement):
 - 'male': Masculino (quadrado azul)
 - 'female': Feminino (círculo rosa)
-- 'index-female': Pessoa Índice Feminina (círculo roxo preenchido com borda dupla)
 - 'pregnancy': Gravidez (triângulo amarelo)
 - 'undefined': Sexo Indefinido (triângulo invertido cinza)
 - 'twins': Gêmeos (dois círculos conectados ciano)

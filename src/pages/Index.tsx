@@ -86,16 +86,6 @@ const Index = () => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Delete' && selectedElement !== null) {
-        const element = elements[selectedElement];
-        // Prevent deleting index person (female)
-        if (element?.type === 'index-female') {
-          toast({
-            title: "Pessoa Índice não pode ser excluída",
-            description: "A pessoa índice é o ponto central do genograma.",
-            variant: "destructive",
-          });
-          return;
-        }
         deleteElement();
       }
     };
@@ -650,19 +640,7 @@ const Index = () => {
       ctx.lineWidth = element.selected ? 3 : 2;
       ctx.fillStyle = element.status === 'deceased' ? '#cbd5e1' : '#ffffff';
 
-      if (element.type === 'index-female') {
-        // Pessoa índice feminina (círculo preenchido com borda dupla)
-        ctx.fillStyle = '#7c3aed';
-        ctx.beginPath();
-        ctx.arc(element.x, element.y, 25, 0, 2 * Math.PI);
-        ctx.fill();
-        ctx.strokeStyle = '#5b21b6';
-        ctx.lineWidth = 4;
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.arc(element.x, element.y, 22, 0, 2 * Math.PI);
-        ctx.stroke();
-      } else if (element.type === 'male') {
+      if (element.type === 'male') {
         ctx.fillStyle = element.status === 'deceased' ? '#cbd5e1' : '#dbeafe';
         ctx.fillRect(element.x - 25, element.y - 25, 50, 50);
         ctx.strokeStyle = element.selected ? '#10b981' : '#3b82f6';
@@ -749,7 +727,7 @@ const Index = () => {
         ctx.setLineDash([5, 5]);
         ctx.strokeStyle = '#8b5cf6';
         ctx.lineWidth = 2;
-        if (element.type === 'male' || element.type === 'index-female') {
+        if (element.type === 'male') {
           ctx.strokeRect(element.x - 28, element.y - 28, 56, 56);
         } else if (element.type === 'female') {
           ctx.beginPath();
@@ -1044,14 +1022,6 @@ const Index = () => {
                   size="sm"
                 >
                   ⚪ Feminino
-                </Button>
-                <Button
-                  onClick={() => addElement('index-female')}
-                  className="w-full bg-purple-600/10 hover:bg-purple-600/20 border-purple-600/30 text-purple-700"
-                  variant="outline"
-                  size="sm"
-                >
-                  ⚫ Pessoa Índice (F)
                 </Button>
                 <Button
                   onClick={() => addElement('pregnancy')}
