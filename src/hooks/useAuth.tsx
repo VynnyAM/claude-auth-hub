@@ -131,15 +131,25 @@ export const useAuth = () => {
         throw error;
       }
 
+      // Limpa estados locais imediatamente para evitar flicker
+      setSession(null);
+      setUser(null);
+
       toast({
         title: "Logout realizado",
         description: "Até logo!",
       });
+
+      // Redireciona de forma confiável para a página de login
+      window.location.replace('/auth');
     } catch (error: any) {
       const msg = String(error?.message || error || "");
       // Trate "Auth session missing" como sucesso idempotente
       if (msg.toLowerCase().includes('auth session missing')) {
+        setSession(null);
+        setUser(null);
         toast({ title: "Logout realizado", description: "Até logo!" });
+        window.location.replace('/auth');
         return;
       }
       toast({
