@@ -222,7 +222,16 @@ const Index = () => {
   };
 
   const deleteElement = () => {
-    if (selectedElement) {
+    // Check if there are multiple selected elements
+    const selectedElements = elements.filter(e => e.selected);
+    
+    if (selectedElements.length > 0) {
+      // Delete all selected elements
+      const selectedIds = selectedElements.map(e => e.id);
+      setElements(elements.filter(e => !selectedIds.includes(e.id)));
+      setSelectedElement(null);
+    } else if (selectedElement) {
+      // Delete single selected element (legacy behavior)
       setElements(elements.filter(e => e.id !== selectedElement));
       setSelectedElement(null);
     }
