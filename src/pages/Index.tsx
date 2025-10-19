@@ -128,10 +128,10 @@ const Index = () => {
   };
 
   const handleCreateNew = () => {
-    if (!canCreateMultiple && genograms.length >= 1) {
+    if (!canCreateMultiple) {
       toast({
-        title: "Limite atingido",
-        description: "O plano Básico permite criar apenas 1 genograma. Faça upgrade para o plano Profissional para criar genogramas ilimitados.",
+        title: "Funcionalidade bloqueada",
+        description: "O plano Básico não permite criar novos genogramas. Faça upgrade para o plano Profissional para criar genogramas ilimitados.",
         variant: "destructive",
       });
       return;
@@ -607,10 +607,9 @@ const Index = () => {
                   className="w-full"
                   variant="outline"
                   size="sm"
-                  disabled={!canCreateMultiple && genograms.length >= 1}
+                  disabled={!canCreateMultiple}
                 >
-                  {!canCreateMultiple && genograms.length >= 1 && <Lock className="w-4 h-4 mr-2" />}
-                  {(canCreateMultiple || genograms.length < 1) && <Plus className="w-4 h-4 mr-2" />}
+                  {!canCreateMultiple ? <Lock className="w-4 h-4 mr-2" /> : <Plus className="w-4 h-4 mr-2" />}
                   Novo Genograma
                 </Button>
                 <Button
