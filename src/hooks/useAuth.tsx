@@ -10,12 +10,30 @@ export const useAuth = () => {
   const { toast } = useToast();
 
   useEffect(() => {
+    const checkSubscription = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          await supabase.functions.invoke('check-subscription');
+        }
+      } catch (error) {
+        console.error('Error checking subscription:', error);
+      }
+    };
+
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
+        
+        // Check subscription on auth state change
+        if (session) {
+          setTimeout(() => {
+            checkSubscription();
+          }, 0);
+        }
       }
     );
 
@@ -24,6 +42,13 @@ export const useAuth = () => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
+      
+      // Initial subscription check
+      if (session) {
+        setTimeout(() => {
+          checkSubscription();
+        }, 0);
+      }
     });
 
     return () => subscription.unsubscribe();

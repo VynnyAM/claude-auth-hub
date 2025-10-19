@@ -1,10 +1,17 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, Heart, Lock, Mail, Check, X } from 'lucide-react';
+import { Users, Heart, Lock, Mail, Check, X, CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+
+const PRICE_IDS = {
+  basic: 'price_1SJs8NBOrcC2OeBV6wUbq4o4',
+  standard: 'price_1SJs8oBOrcC2OeBV1YD4gVv8',
+};
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -13,6 +20,7 @@ const Auth = () => {
   const [fullName, setFullName] = useState('');
   const [selectedPlan, setSelectedPlan] = useState<'basic' | 'standard' | 'premium'>('basic');
   const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
   const navigate = useNavigate();
   const { signIn, signUp, user } = useAuth();
 
@@ -40,6 +48,40 @@ const Auth = () => {
     }
 
     setLoading(false);
+  };
+
+  const handleSubscribe = async (plan: 'basic' | 'standard') => {
+    if (!user) {
+      toast({
+        title: "Login necessário",
+        description: "Faça login ou cadastre-se para assinar um plano.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const priceId = PRICE_IDS[plan];
+      
+      const { data, error } = await supabase.functions.invoke('create-checkout', {
+        body: { priceId }
+      });
+
+      if (error) throw error;
+      
+      if (data?.url) {
+        window.open(data.url, '_blank');
+      }
+    } catch (error: any) {
+      toast({
+        title: "Erro ao criar checkout",
+        description: error.message || "Não foi possível iniciar o processo de pagamento.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -79,9 +121,20 @@ const Auth = () => {
                 <span className="text-sm text-muted-foreground">Baixar imagens</span>
               </li>
             </ul>
-            <p className="text-xs text-center text-muted-foreground">
-              Ideal para começar a criar genogramas profissionais
-            </p>
+            <div className="mt-4 space-y-2">
+              <Button
+                onClick={() => handleSubscribe('basic')}
+                disabled={loading}
+                className="w-full"
+                variant="outline"
+              >
+                <CreditCard className="w-4 h-4 mr-2" />
+                Assinar Plano Básico
+              </Button>
+              <p className="text-xs text-center text-muted-foreground">
+                Ideal para começar a criar genogramas profissionais
+              </p>
+            </div>
           </div>
 
           {/* Plano Padrão - Destacado */}
@@ -112,9 +165,19 @@ const Auth = () => {
                 <span className="text-sm font-medium">Baixar imagens em alta qualidade</span>
               </li>
             </ul>
-            <p className="text-xs text-center text-foreground font-medium">
-              Perfeito para profissionais que precisam salvar seus trabalhos
-            </p>
+            <div className="mt-4 space-y-2">
+              <Button
+                onClick={() => handleSubscribe('standard')}
+                disabled={loading}
+                className="w-full"
+              >
+                <CreditCard className="w-4 h-4 mr-2" />
+                Assinar Plano Padrão
+              </Button>
+              <p className="text-xs text-center text-foreground font-medium">
+                Perfeito para profissionais que precisam salvar seus trabalhos
+              </p>
+            </div>
           </div>
 
           {/* Plano Premium */}
