@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { z } from 'zod';
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -14,9 +15,27 @@ const Auth = () => {
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<{
+    fullName?: string;
+    email?: string;
+    password?: string;
+    phone?: string;
+  }>({});
   const { toast } = useToast();
   const navigate = useNavigate();
   const { signIn, signUp, signInWithGoogle, user } = useAuth();
+
+  const signupSchema = z.object({
+    fullName: z.string().trim().min(1, "Nome completo é obrigatório"),
+    email: z.string().trim().email("Email inválido"),
+    password: z.string().min(6, "Senha deve ter no mínimo 6 caracteres"),
+    phone: z.string().trim().min(1, "Telefone é obrigatório"),
+  });
+
+  const loginSchema = z.object({
+    email: z.string().trim().email("Email inválido"),
+    password: z.string().min(1, "Senha é obrigatória"),
+  });
 
   useEffect(() => {
     if (user) {
@@ -26,19 +45,68 @@ const Auth = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrors({});
     setLoading(true);
 
-    if (isLogin) {
-      const { error } = await signIn(email, password);
-      if (!error) {
-        navigate('/');
+    try {
+      if (isLogin) {
+        const validation = loginSchema.safeParse({ email, password });
+        if (!validation.success) {
+          const fieldErrors: any = {};
+          validation.error.errors.forEach((err) => {
+            if (err.path[0]) {
+              fieldErrors[err.path[0]] = err.message;
+            }
+          });
+          setErrors(fieldErrors);
+          setLoading(false);
+          return;
+        }
+        const { error } = await signIn(email, password);
+        if (!error) {
+          navigate('/');
+        } else {
+          toast({
+            title: "Erro ao fazer login",
+            description: error.message,
+            variant: "destructive",
+          });
+        }
+      } else {
+        const validation = signupSchema.safeParse({ fullName, email, password, phone });
+        if (!validation.success) {
+          const fieldErrors: any = {};
+          validation.error.errors.forEach((err) => {
+            if (err.path[0]) {
+              fieldErrors[err.path[0]] = err.message;
+            }
+          });
+          setErrors(fieldErrors);
+          setLoading(false);
+          return;
+        }
+        const { error } = await signUp(email, password, fullName, phone, 'basic');
+        if (!error) {
+          toast({
+            title: "Conta criada com sucesso!",
+            description: "Faça login com suas credenciais.",
+          });
+          setIsLogin(true);
+          setPassword('');
+        } else {
+          toast({
+            title: "Erro ao criar conta",
+            description: error.message,
+            variant: "destructive",
+          });
+        }
       }
-    } else {
-      const { error } = await signUp(email, password, fullName, phone, 'basic');
-      if (!error) {
-        setIsLogin(true);
-        setPassword('');
-      }
+    } catch (error: any) {
+      toast({
+        title: "Erro",
+        description: error.message || "Ocorreu um erro inesperado",
+        variant: "destructive",
+      });
     }
 
     setLoading(false);
@@ -89,7 +157,7 @@ const Auth = () => {
             {!isLogin && (
               <>
                 <div>
-                  <Label htmlFor="fullName">Nome Completo</Label>
+                  <Label htmlFor="fullName">Nome Completo *</Label>
                   <Input
                     id="fullName"
                     type="text"
@@ -97,11 +165,15 @@ const Auth = () => {
                     onChange={(e) => setFullName(e.target.value)}
                     placeholder="Dr. João Silva"
                     required={!isLogin}
+                    className={errors.fullName ? "border-destructive" : ""}
                   />
+                  {errors.fullName && (
+                    <p className="text-sm text-destructive mt-1">{errors.fullName}</p>
+                  )}
                 </div>
                 
                 <div>
-                  <Label htmlFor="phone">Telefone</Label>
+                  <Label htmlFor="phone">Telefone *</Label>
                   <div className="relative">
                     <Phone className="absolute left-3 top-3 w-5 h-5 text-muted-foreground" />
                     <Input
@@ -109,17 +181,20 @@ const Auth = () => {
                       type="tel"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
-                      className="pl-10"
+                      className={`pl-10 ${errors.phone ? "border-destructive" : ""}`}
                       placeholder="(00) 00000-0000"
                       required={!isLogin}
                     />
                   </div>
+                  {errors.phone && (
+                    <p className="text-sm text-destructive mt-1">{errors.phone}</p>
+                  )}
                 </div>
               </>
             )}
             
             <div>
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">Email *</Label>
               <div className="relative">
                 <Mail className="absolute left-3 top-3 w-5 h-5 text-muted-foreground" />
                 <Input
@@ -127,15 +202,18 @@ const Auth = () => {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="pl-10"
+                  className={`pl-10 ${errors.email ? "border-destructive" : ""}`}
                   placeholder="seu@email.com"
                   required
                 />
               </div>
+              {errors.email && (
+                <p className="text-sm text-destructive mt-1">{errors.email}</p>
+              )}
             </div>
             
             <div>
-              <Label htmlFor="password">Senha</Label>
+              <Label htmlFor="password">Senha *</Label>
               <div className="relative">
                 <Lock className="absolute left-3 top-3 w-5 h-5 text-muted-foreground" />
                 <Input
@@ -143,12 +221,15 @@ const Auth = () => {
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10"
+                  className={`pl-10 ${errors.password ? "border-destructive" : ""}`}
                   placeholder="••••••••"
                   required
                   minLength={6}
                 />
               </div>
+              {errors.password && (
+                <p className="text-sm text-destructive mt-1">{errors.password}</p>
+              )}
             </div>
             
             <Button
