@@ -60,6 +60,8 @@ const Index = () => {
   const [isSelecting, setIsSelecting] = useState(false);
   const [selectionStart, setSelectionStart] = useState({ x: 0, y: 0 });
   const [selectionEnd, setSelectionEnd] = useState({ x: 0, y: 0 });
+  const [draggingMultiple, setDraggingMultiple] = useState(false);
+  const [draggedElements, setDraggedElements] = useState<{ id: number; offsetX: number; offsetY: number }[]>([]);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -237,9 +239,26 @@ const Index = () => {
       if (e.ctrlKey || e.metaKey) {
         toggleSelection(clicked.id);
       } else {
-        setIsDragging(true);
-        setDragOffset({ x: x - clicked.x, y: y - clicked.y });
-        setSelectedElement(clicked.id);
+        const selectedElements = elements.filter(el => el.selected && el.type !== 'relation');
+        
+        // Se clicou em um elemento selecionado e há múltiplos selecionados, arrastar todos
+        if (clicked.selected && selectedElements.length > 1) {
+          setDraggingMultiple(true);
+          setDraggedElements(
+            selectedElements.map(el => ({
+              id: el.id,
+              offsetX: x - el.x,
+              offsetY: y - el.y
+            }))
+          );
+        } else {
+          // Arrastar apenas o elemento clicado
+          setIsDragging(true);
+          setDragOffset({ x: x - clicked.x, y: y - clicked.y });
+          setSelectedElement(clicked.id);
+          // Desselecionar outros
+          setElements(elements.map(el => ({ ...el, selected: el.id === clicked.id })));
+        }
       }
     } else {
       // Iniciar seleção por arrastar
@@ -260,6 +279,16 @@ const Index = () => {
     
     if (isDragging && selectedElement) {
       updateElement(selectedElement, { x: x - dragOffset.x, y: y - dragOffset.y });
+    } else if (draggingMultiple) {
+      // Arrastar todos os elementos selecionados mantendo posições relativas
+      const updatedElements = elements.map(el => {
+        const draggedEl = draggedElements.find(d => d.id === el.id);
+        if (draggedEl) {
+          return { ...el, x: x - draggedEl.offsetX, y: y - draggedEl.offsetY };
+        }
+        return el;
+      });
+      setElements(updatedElements);
     } else if (isSelecting) {
       setSelectionEnd({ x, y });
     }
@@ -282,6 +311,8 @@ const Index = () => {
       setIsSelecting(false);
     }
     setIsDragging(false);
+    setDraggingMultiple(false);
+    setDraggedElements([]);
   };
 
   useEffect(() => {
