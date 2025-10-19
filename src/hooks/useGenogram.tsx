@@ -14,6 +14,7 @@ export interface GenogramElement {
   relationType?: string;
   from?: number;
   to?: number;
+  children?: number[];
 }
 
 export const useGenogram = (userId: string | undefined) => {

@@ -163,20 +163,43 @@ const Index = () => {
 
   const addRelation = (relationType: string) => {
     const selected = elements.filter(e => e.selected);
-    if (selected.length === 2) {
+    
+    // Para relação de filhos, permite seleção de pais + filhos
+    if (relationType === 'children') {
+      if (selected.length < 3) {
+        alert('Selecione ao menos 2 pais e 1 filho (mínimo 3 pessoas)');
+        return;
+      }
+      
       const newRelation: GenogramElement = {
         id: Date.now(),
         type: 'relation',
         relationType,
-        from: selected[0].id,
-        to: selected[1].id,
+        from: selected[0].id, // Primeiro pai
+        to: selected[1].id, // Segundo pai
         x: 0,
-        y: 0
+        y: 0,
+        children: selected.slice(2).map(s => s.id) // Todos os outros são filhos
       };
       setElements([...elements.map(e => ({ ...e, selected: false })), newRelation]);
       setSelectedElement(null);
     } else {
-      alert('Selecione exatamente 2 pessoas para criar uma relação');
+      // Para outras relações, exige exatamente 2 pessoas
+      if (selected.length === 2) {
+        const newRelation: GenogramElement = {
+          id: Date.now(),
+          type: 'relation',
+          relationType,
+          from: selected[0].id,
+          to: selected[1].id,
+          x: 0,
+          y: 0
+        };
+        setElements([...elements.map(e => ({ ...e, selected: false })), newRelation]);
+        setSelectedElement(null);
+      } else {
+        alert('Selecione exatamente 2 pessoas para criar uma relação');
+      }
     }
   };
 
@@ -208,7 +231,7 @@ const Index = () => {
     });
     
     if (clicked) {
-      if (e.shiftKey) {
+      if (e.ctrlKey || e.metaKey) {
         toggleSelection(clicked.id);
       } else {
         setIsDragging(true);
@@ -249,6 +272,54 @@ const Index = () => {
     elements.filter(e => e.type === 'relation').forEach(rel => {
       const from = elements.find(e => e.id === rel.from);
       const to = elements.find(e => e.id === rel.to);
+      
+      // Relação de filhos (linhas verticais)
+      if (rel.relationType === 'children' && rel.children) {
+        if (from && to) {
+          // Linha horizontal entre os pais
+          const midX = (from.x + to.x) / 2;
+          const midY = Math.min(from.y, to.y) + 40;
+          
+          ctx.strokeStyle = '#4ade80';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(from.x, from.y + 25);
+          ctx.lineTo(from.x, midY);
+          ctx.lineTo(to.x, midY);
+          ctx.lineTo(to.x, to.y + 25);
+          ctx.stroke();
+          
+          // Linhas verticais para cada filho
+          rel.children.forEach((childId: number) => {
+            const child = elements.find(e => e.id === childId);
+            if (child) {
+              ctx.beginPath();
+              ctx.moveTo(midX, midY);
+              ctx.lineTo(child.x, child.y - 25);
+              ctx.stroke();
+            }
+          });
+        } else if (from && rel.children.length > 0) {
+          // Apenas um pai selecionado
+          const baseY = from.y + 40;
+          
+          rel.children.forEach((childId: number) => {
+            const child = elements.find(e => e.id === childId);
+            if (child) {
+              ctx.strokeStyle = '#4ade80';
+              ctx.lineWidth = 2;
+              ctx.beginPath();
+              ctx.moveTo(from.x, from.y + 25);
+              ctx.lineTo(from.x, baseY);
+              ctx.lineTo(child.x, baseY);
+              ctx.lineTo(child.x, child.y - 25);
+              ctx.stroke();
+            }
+          });
+        }
+        return;
+      }
+      
       if (from && to) {
         const midX = (from.x + to.x) / 2;
         const midY = (from.y + to.y) / 2;
@@ -685,8 +756,16 @@ const Index = () => {
 
             <div className="bg-card rounded-xl shadow-md p-4">
               <h3 className="font-medium text-foreground mb-3">Relações</h3>
-              <p className="text-xs text-muted-foreground mb-2">Shift + clique em 2 pessoas</p>
+              <p className="text-xs text-muted-foreground mb-2">Ctrl + clique para selecionar</p>
               <div className="space-y-2 max-h-64 overflow-y-auto">
+                <Button
+                  onClick={() => addRelation('children')}
+                  className="w-full bg-green-500/10 hover:bg-green-500/20 border-green-500/30 text-green-700"
+                  variant="outline"
+                  size="sm"
+                >
+                  Filhos (2 pais + filhos)
+                </Button>
                 <Button
                   onClick={() => addRelation('marriage')}
                   className="w-full bg-accent/10 hover:bg-accent/20 border-accent/30 text-accent"
