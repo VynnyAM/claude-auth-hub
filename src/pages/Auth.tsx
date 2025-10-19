@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/useAuth';
-import { useToast } from '@/hooks/use-toast';
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -13,7 +12,6 @@ const Auth = () => {
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [loading, setLoading] = useState(false);
-  const { toast } = useToast();
   const navigate = useNavigate();
   const { signIn, signUp, user } = useAuth();
 
@@ -33,7 +31,7 @@ const Auth = () => {
         navigate('/');
       }
     } else {
-      const { error } = await signUp(email, password, fullName, 'basic');
+      const { error } = await signUp(email, password, fullName);
       if (!error) {
         setIsLogin(true);
         setPassword('');
@@ -44,8 +42,8 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-green-50 flex items-center justify-center py-8 px-4">
-      <div className="max-w-6xl w-full mx-auto grid md:grid-cols-2 gap-8 items-center">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-green-50 flex items-center justify-center p-4">
+      <div className="max-w-6xl w-full grid md:grid-cols-2 gap-8 items-center">
         <div className="text-center md:text-left space-y-6">
           <div className="flex items-center justify-center md:justify-start gap-3 mb-4">
             <Users className="w-12 h-12 text-primary" />

@@ -1,10 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, Download, Trash2, Users, Save, FolderOpen, Plus, Lock, CreditCard, Check, X } from 'lucide-react';
+import { User, LogOut, Download, Send, Trash2, Users, Heart, Save, FolderOpen, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useToast } from '@/hooks/use-toast';
 import {
   Dialog,
   DialogContent,
@@ -22,21 +21,10 @@ import {
 } from '@/components/ui/select';
 import { useAuth } from '@/hooks/useAuth';
 import { useGenogram, GenogramElement } from '@/hooks/useGenogram';
-import { useSubscription } from '@/hooks/useSubscription';
-import { supabase } from '@/integrations/supabase/client';
-
-const PRICE_IDS = {
-  basic: 'price_1SJs8NBOrcC2OeBV6wUbq4o4',
-  standard: 'price_1SJs8oBOrcC2OeBV1YD4gVv8',
-};
 
 const Index = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading, signOut } = useAuth();
-  const { subscription, canDownload, canSaveLoad, canCreateMultiple } = useSubscription(user?.id);
-  const { toast } = useToast();
-  const [showPlansModal, setShowPlansModal] = useState(false);
-  const [subscribing, setSubscribing] = useState(false);
   const { 
     genograms, 
     currentGenogramId, 
@@ -50,10 +38,12 @@ const Index = () => {
   } = useGenogram(user?.id);
 
   const [selectedElement, setSelectedElement] = useState<number | null>(null);
+  const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
   const [showClearModal, setShowClearModal] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [showLoadModal, setShowLoadModal] = useState(false);
   const [genogramTitle, setGenogramTitle] = useState('Novo Genograma');
+  const [whatsappNumber, setWhatsappNumber] = useState('');
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
@@ -64,79 +54,9 @@ const Index = () => {
     }
   }, [user, authLoading, navigate]);
 
-  // Refresh subscription status when user returns from checkout
-  useEffect(() => {
-    const handleFocus = async () => {
-      if (user) {
-        await supabase.functions.invoke('check-subscription');
-      }
-    };
-
-    window.addEventListener('focus', handleFocus);
-    return () => window.removeEventListener('focus', handleFocus);
-  }, [user]);
-
-  const handleSubscribe = async (plan: 'basic' | 'standard') => {
-    try {
-      setSubscribing(true);
-      const priceId = PRICE_IDS[plan];
-      
-      const { data, error } = await supabase.functions.invoke('create-checkout', {
-        body: { priceId }
-      });
-
-      if (error) throw error;
-      
-      if (data?.url) {
-        window.open(data.url, '_blank');
-      }
-    } catch (error: any) {
-      toast({
-        title: "Erro ao criar checkout",
-        description: error.message || "Não foi possível iniciar o processo de pagamento.",
-        variant: "destructive",
-      });
-    } finally {
-      setSubscribing(false);
-    }
-  };
-
-  const handleManageSubscription = async () => {
-    try {
-      setSubscribing(true);
-      const { data, error } = await supabase.functions.invoke('customer-portal');
-
-      if (error) throw error;
-      
-      if (data?.url) {
-        window.open(data.url, '_blank');
-      }
-    } catch (error: any) {
-      toast({
-        title: "Erro ao acessar portal",
-        description: error.message || "Não foi possível acessar o portal de gerenciamento.",
-        variant: "destructive",
-      });
-    } finally {
-      setSubscribing(false);
-    }
-  };
-
   const handleLogout = async () => {
     await signOut();
     navigate('/auth');
-  };
-
-  const handleCreateNew = () => {
-    if (!canCreateMultiple && genograms.length >= 1) {
-      toast({
-        title: "Limite atingido",
-        description: "O plano Básico permite criar apenas 1 genograma. Faça upgrade para o plano Padrão para criar genogramas ilimitados.",
-        variant: "destructive",
-      });
-      return;
-    }
-    createNewGenogram();
   };
 
   const limparTela = () => {
@@ -323,15 +243,6 @@ const Index = () => {
   }, [elements, selectedElement]);
 
   const exportImage = () => {
-    if (!canDownload) {
-      toast({
-        title: "Recurso bloqueado",
-        description: "Faça upgrade para o plano Padrão para baixar imagens.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
     const canvas = canvasRef.current;
     if (!canvas) return;
     
@@ -342,33 +253,22 @@ const Index = () => {
     link.click();
   };
 
+  const sendWhatsApp = () => {
+    if (whatsappNumber) {
+      const cleanNumber = whatsappNumber.replace(/\D/g, '');
+      const message = encodeURIComponent("Olá! Segue o genograma solicitado.");
+      window.open(`https://wa.me/55${cleanNumber}?text=${message}`, '_blank');
+      setShowWhatsAppModal(false);
+      setWhatsappNumber('');
+    }
+  };
 
   const handleSave = async () => {
-    if (!canSaveLoad) {
-      toast({
-        title: "Recurso bloqueado",
-        description: "Faça upgrade para o plano Padrão para salvar genogramas.",
-        variant: "destructive",
-      });
-      setShowSaveModal(false);
-      return;
-    }
-    
     await saveGenogram(genogramTitle);
     setShowSaveModal(false);
   };
 
   const handleLoad = async (genogramId: string) => {
-    if (!canSaveLoad) {
-      toast({
-        title: "Recurso bloqueado",
-        description: "Faça upgrade para o plano Padrão para carregar genogramas.",
-        variant: "destructive",
-      });
-      setShowLoadModal(false);
-      return;
-    }
-    
     await loadGenogram(genogramId);
     setShowLoadModal(false);
   };
@@ -392,16 +292,10 @@ const Index = () => {
               </p>
             </div>
           </div>
-          <div className="flex gap-2">
-            <Button onClick={() => setShowPlansModal(true)} variant="outline" size="sm">
-              <CreditCard className="w-5 h-5 mr-2" />
-              Meu Plano
-            </Button>
-            <Button onClick={handleLogout} variant="ghost" size="sm">
-              <LogOut className="w-5 h-5 mr-2" />
-              Sair
-            </Button>
-          </div>
+          <Button onClick={handleLogout} variant="ghost" size="sm">
+            <LogOut className="w-5 h-5 mr-2" />
+            Sair
+          </Button>
         </div>
       </div>
 
@@ -412,14 +306,12 @@ const Index = () => {
               <h3 className="font-medium text-foreground mb-3">Gerenciar</h3>
               <div className="space-y-2">
                 <Button
-                  onClick={handleCreateNew}
+                  onClick={createNewGenogram}
                   className="w-full"
                   variant="outline"
                   size="sm"
-                  disabled={!canCreateMultiple && genograms.length >= 1}
                 >
-                  {!canCreateMultiple && genograms.length >= 1 && <Lock className="w-4 h-4 mr-2" />}
-                  {(canCreateMultiple || genograms.length < 1) && <Plus className="w-4 h-4 mr-2" />}
+                  <Plus className="w-4 h-4 mr-2" />
                   Novo Genograma
                 </Button>
                 <Button
@@ -427,10 +319,9 @@ const Index = () => {
                   className="w-full"
                   variant="outline"
                   size="sm"
-                  disabled={genogramLoading || !canSaveLoad}
+                  disabled={genogramLoading}
                 >
-                  {!canSaveLoad && <Lock className="w-4 h-4 mr-2" />}
-                  {canSaveLoad && <Save className="w-4 h-4 mr-2" />}
+                  <Save className="w-4 h-4 mr-2" />
                   Salvar
                 </Button>
                 <Button
@@ -438,10 +329,8 @@ const Index = () => {
                   className="w-full"
                   variant="outline"
                   size="sm"
-                  disabled={!canSaveLoad}
                 >
-                  {!canSaveLoad && <Lock className="w-4 h-4 mr-2" />}
-                  {canSaveLoad && <FolderOpen className="w-4 h-4 mr-2" />}
+                  <FolderOpen className="w-4 h-4 mr-2" />
                   Carregar
                 </Button>
               </div>
@@ -585,11 +474,18 @@ const Index = () => {
                   className="w-full bg-muted/50 hover:bg-muted border-muted-foreground/30"
                   variant="outline"
                   size="sm"
-                  disabled={!canDownload}
                 >
-                  {!canDownload && <Lock className="w-4 h-4 mr-2" />}
-                  {canDownload && <Download className="w-4 h-4 mr-2" />}
+                  <Download className="w-4 h-4 mr-2" />
                   Baixar Imagem
+                </Button>
+                <Button
+                  onClick={() => setShowWhatsAppModal(true)}
+                  className="w-full bg-muted/50 hover:bg-muted border-muted-foreground/30"
+                  variant="outline"
+                  size="sm"
+                >
+                  <Send className="w-4 h-4 mr-2" />
+                  Enviar para Cliente
                 </Button>
               </div>
             </div>
@@ -627,6 +523,31 @@ const Index = () => {
             </Button>
             <Button variant="destructive" onClick={limparTela}>
               Limpar Tudo
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showWhatsAppModal} onOpenChange={setShowWhatsAppModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Enviar Genograma</DialogTitle>
+            <DialogDescription>
+              Digite o número do WhatsApp do cliente (com DDD):
+            </DialogDescription>
+          </DialogHeader>
+          <Input
+            type="tel"
+            value={whatsappNumber}
+            onChange={(e) => setWhatsappNumber(e.target.value)}
+            placeholder="(11) 99999-9999"
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowWhatsAppModal(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={sendWhatsApp}>
+              Enviar pelo WhatsApp
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -698,133 +619,6 @@ const Index = () => {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowLoadModal(false)}>
-              Fechar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={showPlansModal} onOpenChange={setShowPlansModal}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-2xl">Gerenciar Assinatura</DialogTitle>
-            <DialogDescription>
-              {subscription?.status === 'active' 
-                ? `Você está no plano ${subscription.plan === 'basic' ? 'Básico' : 'Padrão'}` 
-                : 'Escolha um plano para desbloquear todos os recursos'}
-            </DialogDescription>
-          </DialogHeader>
-
-          {subscription?.status === 'active' && (
-            <div className="mb-4">
-              <Button 
-                onClick={handleManageSubscription}
-                disabled={subscribing}
-                variant="outline"
-                className="w-full"
-              >
-                Gerenciar Minha Assinatura no Stripe
-              </Button>
-            </div>
-          )}
-
-          <div className="grid md:grid-cols-2 gap-4">
-            {/* Plano Básico */}
-            <div className={`bg-card rounded-xl shadow-lg p-6 border-2 transition-all ${
-              subscription?.plan === 'basic' 
-                ? 'border-primary bg-primary/5' 
-                : 'border-border hover:border-primary/50'
-            }`}>
-              {subscription?.plan === 'basic' && (
-                <div className="mb-2">
-                  <span className="bg-primary text-primary-foreground px-3 py-1 rounded-full text-xs font-semibold">
-                    SEU PLANO ATUAL
-                  </span>
-                </div>
-              )}
-              <div className="mb-4">
-                <h3 className="text-2xl font-semibold text-foreground mb-2">Básico</h3>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-4xl font-bold text-primary">R$ 40</span>
-                  <span className="text-muted-foreground">/mês</span>
-                </div>
-              </div>
-              <ul className="space-y-3 mb-6">
-                <li className="flex items-start gap-2">
-                  <Check className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
-                  <span className="text-sm">Criar apenas 1 genograma</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <X className="w-5 h-5 text-muted-foreground flex-shrink-0 mt-0.5" />
-                  <span className="text-sm text-muted-foreground">Salvar e carregar genogramas</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <X className="w-5 h-5 text-muted-foreground flex-shrink-0 mt-0.5" />
-                  <span className="text-sm text-muted-foreground">Baixar imagens</span>
-                </li>
-              </ul>
-              {subscription?.plan !== 'basic' && (
-                <Button
-                  onClick={() => handleSubscribe('basic')}
-                  disabled={subscribing}
-                  className="w-full"
-                  variant="outline"
-                >
-                  <CreditCard className="w-4 h-4 mr-2" />
-                  Assinar Plano Básico
-                </Button>
-              )}
-            </div>
-
-            {/* Plano Padrão */}
-            <div className={`bg-card rounded-xl shadow-lg p-6 border-2 transition-all ${
-              subscription?.plan === 'standard' 
-                ? 'border-primary bg-primary/5' 
-                : 'border-border hover:border-primary/50'
-            }`}>
-              {subscription?.plan === 'standard' && (
-                <div className="mb-2">
-                  <span className="bg-primary text-primary-foreground px-3 py-1 rounded-full text-xs font-semibold">
-                    SEU PLANO ATUAL
-                  </span>
-                </div>
-              )}
-              <div className="mb-4">
-                <h3 className="text-2xl font-semibold text-foreground mb-2">Padrão</h3>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-4xl font-bold text-primary">R$ 50</span>
-                  <span className="text-muted-foreground">/mês</span>
-                </div>
-              </div>
-              <ul className="space-y-3 mb-6">
-                <li className="flex items-start gap-2">
-                  <Check className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
-                  <span className="text-sm font-medium">Criar genogramas ilimitados</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <Check className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
-                  <span className="text-sm font-medium">Salvar e carregar genogramas</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <Check className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
-                  <span className="text-sm font-medium">Baixar imagens em alta qualidade</span>
-                </li>
-              </ul>
-              {subscription?.plan !== 'standard' && (
-                <Button
-                  onClick={() => handleSubscribe('standard')}
-                  disabled={subscribing}
-                  className="w-full"
-                >
-                  <CreditCard className="w-4 h-4 mr-2" />
-                  {subscription?.plan === 'basic' ? 'Fazer Upgrade' : 'Assinar Plano Padrão'}
-                </Button>
-              )}
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowPlansModal(false)}>
               Fechar
             </Button>
           </DialogFooter>

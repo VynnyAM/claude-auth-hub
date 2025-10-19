@@ -10,30 +10,12 @@ export const useAuth = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    const checkSubscription = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session) {
-          await supabase.functions.invoke('check-subscription');
-        }
-      } catch (error) {
-        console.error('Error checking subscription:', error);
-      }
-    };
-
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
-        
-        // Check subscription on auth state change
-        if (session) {
-          setTimeout(() => {
-            checkSubscription();
-          }, 0);
-        }
       }
     );
 
@@ -42,23 +24,16 @@ export const useAuth = () => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
-      
-      // Initial subscription check
-      if (session) {
-        setTimeout(() => {
-          checkSubscription();
-        }, 0);
-      }
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (email: string, password: string, fullName: string, plan: 'basic' | 'standard' | 'premium' = 'basic') => {
+  const signUp = async (email: string, password: string, fullName: string) => {
     try {
       const redirectUrl = `${window.location.origin}/`;
       
-      const { data, error } = await supabase.auth.signUp({
+      const { error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -70,18 +45,6 @@ export const useAuth = () => {
       });
 
       if (error) throw error;
-
-      // Update subscription plan after user is created
-      if (data.user) {
-        const { error: updateError } = await supabase
-          .from('subscriptions')
-          .update({ plan })
-          .eq('user_id', data.user.id);
-
-        if (updateError) {
-          console.error('Error updating subscription plan:', updateError);
-        }
-      }
 
       toast({
         title: "Conta criada com sucesso!",
@@ -127,34 +90,16 @@ export const useAuth = () => {
   const signOut = async () => {
     try {
       const { error } = await supabase.auth.signOut();
-      if (error && !String((error as any).message || error).toLowerCase().includes('auth session missing')) {
-        throw error;
-      }
-
-      // Limpa estados locais imediatamente para evitar flicker
-      setSession(null);
-      setUser(null);
-
+      if (error) throw error;
+      
       toast({
         title: "Logout realizado",
         description: "Até logo!",
       });
-
-      // Redireciona de forma confiável para a página de login
-      window.location.replace('/auth');
     } catch (error: any) {
-      const msg = String(error?.message || error || "");
-      // Trate "Auth session missing" como sucesso idempotente
-      if (msg.toLowerCase().includes('auth session missing')) {
-        setSession(null);
-        setUser(null);
-        toast({ title: "Logout realizado", description: "Até logo!" });
-        window.location.replace('/auth');
-        return;
-      }
       toast({
         title: "Erro ao fazer logout",
-        description: msg,
+        description: error.message,
         variant: "destructive",
       });
     }
