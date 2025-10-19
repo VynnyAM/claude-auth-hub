@@ -11,6 +11,7 @@ export interface GenogramElement {
   age?: string;
   status?: string;
   selected?: boolean;
+  highlighted?: boolean;
   relationType?: string;
   from?: number;
   to?: number;

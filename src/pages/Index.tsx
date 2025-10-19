@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, Download, Trash2, Users, Save, FolderOpen, Plus, Lock, CreditCard, Check, X, Network } from 'lucide-react';
+import { LogOut, Download, Trash2, Users, Save, FolderOpen, Plus, Lock, CreditCard, Check, X, Network, BookOpen, LayoutTemplate, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -25,6 +25,8 @@ import { useGenogram, GenogramElement } from '@/hooks/useGenogram';
 import { useSubscription } from '@/hooks/useSubscription';
 import { supabase } from '@/integrations/supabase/client';
 import { AIChatbot } from '@/components/AIChatbot';
+import { GenogramLegend } from '@/components/GenogramLegend';
+import { genogramTemplates } from '@/data/genogramTemplates';
 
 const PRICE_IDS = {
   basic: 'price_1SJs8NBOrcC2OeBV6wUbq4o4',
@@ -54,6 +56,9 @@ const Index = () => {
   const [showClearModal, setShowClearModal] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [showLoadModal, setShowLoadModal] = useState(false);
+  const [showLegendModal, setShowLegendModal] = useState(false);
+  const [showTemplatesModal, setShowTemplatesModal] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
   const [genogramTitle, setGenogramTitle] = useState('Novo Genograma');
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -338,6 +343,17 @@ const Index = () => {
     setDraggedElements([]);
   };
 
+  // Filter elements based on search
+  const filteredElements = useMemo(() => {
+    if (!searchTerm.trim()) return elements;
+    
+    return elements.map(el => {
+      if (el.type === 'relation') return el;
+      const matches = el.name?.toLowerCase().includes(searchTerm.toLowerCase());
+      return { ...el, highlighted: matches };
+    });
+  }, [elements, searchTerm]);
+
   useEffect(() => {
     if (!canvasRef.current) return;
     const canvas = canvasRef.current;
@@ -345,12 +361,33 @@ const Index = () => {
     if (!ctx) return;
     
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    if (elements.length === 0) return;
+    
+    // Draw subtle grid
+    ctx.strokeStyle = 'rgba(200, 200, 220, 0.2)';
+    ctx.lineWidth = 1;
+    
+    // Vertical lines
+    for (let x = 0; x <= canvas.width; x += 50) {
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, canvas.height);
+      ctx.stroke();
+    }
+    
+    // Horizontal lines
+    for (let y = 0; y <= canvas.height; y += 50) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(canvas.width, y);
+      ctx.stroke();
+    }
+    
+    if (filteredElements.length === 0) return;
 
     // Draw relations
-    elements.filter(e => e.type === 'relation').forEach(rel => {
-      const from = elements.find(e => e.id === rel.from);
-      const to = elements.find(e => e.id === rel.to);
+    filteredElements.filter(e => e.type === 'relation').forEach(rel => {
+      const from = filteredElements.find(e => e.id === rel.from);
+      const to = filteredElements.find(e => e.id === rel.to);
       
       // Relação de filhos (linhas verticais)
       if (rel.relationType === 'children' && rel.children) {
@@ -370,7 +407,7 @@ const Index = () => {
           
           // Linhas verticais para cada filho
           rel.children.forEach((childId: number) => {
-            const child = elements.find(e => e.id === childId);
+            const child = filteredElements.find(e => e.id === childId);
             if (child) {
               ctx.beginPath();
               ctx.moveTo(midX, midY);
@@ -383,7 +420,7 @@ const Index = () => {
           const baseY = from.y + 40;
           
           rel.children.forEach((childId: number) => {
-            const child = elements.find(e => e.id === childId);
+            const child = filteredElements.find(e => e.id === childId);
             if (child) {
               ctx.strokeStyle = '#4ade80';
               ctx.lineWidth = 2;
@@ -645,7 +682,15 @@ const Index = () => {
     });
 
     // Draw elements
-    elements.filter(e => e.type !== 'relation').forEach(element => {
+    filteredElements.filter(e => e.type !== 'relation').forEach(element => {
+      // Reduce opacity for non-matching elements when searching
+      const isHighlighted = element.highlighted !== false;
+      const hasSearch = searchTerm.trim().length > 0;
+      
+      if (hasSearch && !isHighlighted) {
+        ctx.globalAlpha = 0.3;
+      }
+      
       ctx.strokeStyle = element.selected ? '#10b981' : '#64748b';
       ctx.lineWidth = element.selected ? 3 : 2;
       ctx.fillStyle = element.status === 'deceased' ? '#cbd5e1' : '#ffffff';
@@ -976,6 +1021,28 @@ const Index = () => {
       <div className="max-w-7xl mx-auto p-4">
         <div className="flex gap-4">
           <div className="w-64 space-y-4 flex-shrink-0">
+            {/* Search Box */}
+            <div className="bg-card rounded-xl shadow-md p-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="Buscar por nome..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 pr-10"
+                />
+                {searchTerm && (
+                  <button
+                    onClick={() => setSearchTerm('')}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+            </div>
+
             <div className="bg-card rounded-xl shadow-md p-4">
               <h3 className="font-medium text-foreground mb-3">Gerenciar</h3>
               <div className="space-y-2">
@@ -1010,6 +1077,24 @@ const Index = () => {
                   {!canSaveLoad && <Lock className="w-4 h-4 mr-2" />}
                   {canSaveLoad && <FolderOpen className="w-4 h-4 mr-2" />}
                   Carregar
+                </Button>
+                <Button
+                  onClick={() => setShowTemplatesModal(true)}
+                  className="w-full"
+                  variant="outline"
+                  size="sm"
+                >
+                  <LayoutTemplate className="w-4 h-4 mr-2" />
+                  Templates
+                </Button>
+                <Button
+                  onClick={() => setShowLegendModal(true)}
+                  className="w-full"
+                  variant="outline"
+                  size="sm"
+                >
+                  <BookOpen className="w-4 h-4 mr-2" />
+                  Legenda
                 </Button>
               </div>
             </div>
@@ -1548,6 +1633,61 @@ const Index = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Templates Modal */}
+      <Dialog open={showTemplatesModal} onOpenChange={setShowTemplatesModal}>
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Selecionar Template</DialogTitle>
+            <DialogDescription>
+              Escolha uma estrutura familiar pré-definida para começar rapidamente
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid md:grid-cols-2 gap-4">
+            {genogramTemplates.map((template) => (
+              <div
+                key={template.id}
+                className="bg-card border-2 border-border hover:border-primary rounded-lg p-4 cursor-pointer transition-all"
+                onClick={() => {
+                  if (elements.length > 0) {
+                    if (confirm('Isso irá substituir o genograma atual. Deseja continuar?')) {
+                      setElements(template.elements);
+                      setShowTemplatesModal(false);
+                      toast({
+                        title: "Template aplicado!",
+                        description: `${template.name} foi carregado com sucesso.`,
+                      });
+                    }
+                  } else {
+                    setElements(template.elements);
+                    setShowTemplatesModal(false);
+                    toast({
+                      title: "Template aplicado!",
+                      description: `${template.name} foi carregado com sucesso.`,
+                    });
+                  }
+                }}
+              >
+                <h3 className="font-semibold text-lg mb-2">{template.name}</h3>
+                <p className="text-sm text-muted-foreground mb-3">{template.description}</p>
+                <div className="bg-muted/30 rounded h-32 flex items-center justify-center text-xs text-muted-foreground">
+                  {template.elements.filter(e => e.type !== 'relation').length} pessoas
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowTemplatesModal(false)}>
+              Fechar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Legend Modal */}
+      <GenogramLegend open={showLegendModal} onOpenChange={setShowLegendModal} />
     </div>
   );
 };
