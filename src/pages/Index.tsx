@@ -919,7 +919,7 @@ const Index = () => {
         selectionEnd.y - selectionStart.y
       );
     }
-  }, [elements, selectedElement, isSelecting, selectionStart, selectionEnd]);
+  }, [elements, selectedElement, isSelecting, selectionStart, selectionEnd, filteredElements, searchTerm]);
 
   const autoOrganize = () => {
     if (elements.length === 0) return;
