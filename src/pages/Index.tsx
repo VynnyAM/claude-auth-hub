@@ -82,6 +82,18 @@ const Index = () => {
     return () => window.removeEventListener('focus', handleFocus);
   }, [user]);
 
+  // Delete selected element with Delete key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Delete' && selectedElement) {
+        deleteElement();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedElement]);
+
   const handleSubscribe = async (plan: 'basic' | 'standard') => {
     try {
       setSubscribing(true);
