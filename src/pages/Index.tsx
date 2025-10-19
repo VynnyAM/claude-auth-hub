@@ -38,12 +38,12 @@ const Index = () => {
   } = useGenogram(user?.id);
 
   const [selectedElement, setSelectedElement] = useState<number | null>(null);
-  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
   const [showClearModal, setShowClearModal] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [showLoadModal, setShowLoadModal] = useState(false);
   const [genogramTitle, setGenogramTitle] = useState('Novo Genograma');
-  const [emailTo, setEmailTo] = useState('');
+  const [whatsappNumber, setWhatsappNumber] = useState('');
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
@@ -253,11 +253,13 @@ const Index = () => {
     link.click();
   };
 
-  const sendEmail = () => {
-    if (emailTo) {
-      alert('Genograma seria enviado para: ' + emailTo + '\n(Funcionalidade de exemplo - requer integração com servidor)');
-      setShowEmailModal(false);
-      setEmailTo('');
+  const sendWhatsApp = () => {
+    if (whatsappNumber) {
+      const cleanNumber = whatsappNumber.replace(/\D/g, '');
+      const message = encodeURIComponent("Olá! Segue o genograma solicitado.");
+      window.open(`https://wa.me/55${cleanNumber}?text=${message}`, '_blank');
+      setShowWhatsAppModal(false);
+      setWhatsappNumber('');
     }
   };
 
@@ -339,24 +341,24 @@ const Index = () => {
               <div className="space-y-2">
                 <Button
                   onClick={() => addElement('male')}
-                  className="w-full"
-                  variant="secondary"
+                  className="w-full bg-primary/10 hover:bg-primary/20 border-primary/30 text-primary"
+                  variant="outline"
                   size="sm"
                 >
                   ⬜ Masculino
                 </Button>
                 <Button
                   onClick={() => addElement('female')}
-                  className="w-full"
-                  variant="secondary"
+                  className="w-full bg-primary/10 hover:bg-primary/20 border-primary/30 text-primary"
+                  variant="outline"
                   size="sm"
                 >
                   ⚪ Feminino
                 </Button>
                 <Button
                   onClick={() => addElement('pregnancy')}
-                  className="w-full"
-                  variant="secondary"
+                  className="w-full bg-primary/10 hover:bg-primary/20 border-primary/30 text-primary"
+                  variant="outline"
                   size="sm"
                 >
                   🔺 Gravidez
@@ -370,32 +372,32 @@ const Index = () => {
               <div className="space-y-2">
                 <Button
                   onClick={() => addRelation('marriage')}
-                  className="w-full"
-                  variant="secondary"
+                  className="w-full bg-accent/10 hover:bg-accent/20 border-accent/30 text-accent"
+                  variant="outline"
                   size="sm"
                 >
                   Casamento
                 </Button>
                 <Button
                   onClick={() => addRelation('divorce')}
-                  className="w-full"
-                  variant="secondary"
+                  className="w-full bg-accent/10 hover:bg-accent/20 border-accent/30 text-accent"
+                  variant="outline"
                   size="sm"
                 >
                   Divórcio
                 </Button>
                 <Button
                   onClick={() => addRelation('conflict')}
-                  className="w-full"
-                  variant="secondary"
+                  className="w-full bg-accent/10 hover:bg-accent/20 border-accent/30 text-accent"
+                  variant="outline"
                   size="sm"
                 >
                   Conflito
                 </Button>
                 <Button
                   onClick={() => addRelation('close')}
-                  className="w-full"
-                  variant="secondary"
+                  className="w-full bg-accent/10 hover:bg-accent/20 border-accent/30 text-accent"
+                  variant="outline"
                   size="sm"
                 >
                   Relação Próxima
@@ -460,7 +462,7 @@ const Index = () => {
               <div className="space-y-2">
                 <Button
                   onClick={() => setShowClearModal(true)}
-                  className="w-full"
+                  className="w-full bg-muted/50 hover:bg-muted border-muted-foreground/30"
                   variant="outline"
                   size="sm"
                 >
@@ -469,7 +471,7 @@ const Index = () => {
                 </Button>
                 <Button
                   onClick={exportImage}
-                  className="w-full"
+                  className="w-full bg-muted/50 hover:bg-muted border-muted-foreground/30"
                   variant="outline"
                   size="sm"
                 >
@@ -477,8 +479,8 @@ const Index = () => {
                   Baixar Imagem
                 </Button>
                 <Button
-                  onClick={() => setShowEmailModal(true)}
-                  className="w-full"
+                  onClick={() => setShowWhatsAppModal(true)}
+                  className="w-full bg-muted/50 hover:bg-muted border-muted-foreground/30"
                   variant="outline"
                   size="sm"
                 >
@@ -526,26 +528,26 @@ const Index = () => {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showEmailModal} onOpenChange={setShowEmailModal}>
+      <Dialog open={showWhatsAppModal} onOpenChange={setShowWhatsAppModal}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Enviar Genograma</DialogTitle>
             <DialogDescription>
-              Digite o email do cliente para enviar o genograma:
+              Digite o número do WhatsApp do cliente (com DDD):
             </DialogDescription>
           </DialogHeader>
           <Input
-            type="email"
-            value={emailTo}
-            onChange={(e) => setEmailTo(e.target.value)}
-            placeholder="cliente@email.com"
+            type="tel"
+            value={whatsappNumber}
+            onChange={(e) => setWhatsappNumber(e.target.value)}
+            placeholder="(11) 99999-9999"
           />
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowEmailModal(false)}>
+            <Button variant="outline" onClick={() => setShowWhatsAppModal(false)}>
               Cancelar
             </Button>
-            <Button onClick={sendEmail}>
-              Enviar
+            <Button onClick={sendWhatsApp}>
+              Enviar pelo WhatsApp
             </Button>
           </DialogFooter>
         </DialogContent>
