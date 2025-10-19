@@ -85,7 +85,8 @@ const Index = () => {
   // Delete selected element with Delete key
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Delete' && selectedElement !== null) {
+      const hasSelectedElements = elements.some(el => el.selected);
+      if (e.key === 'Delete' && (selectedElement !== null || hasSelectedElements)) {
         deleteElement();
       }
     };
