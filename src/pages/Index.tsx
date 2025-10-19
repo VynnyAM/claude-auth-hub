@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, Download, Trash2, Users, Save, FolderOpen, Plus, Lock, CreditCard, Check, X } from 'lucide-react';
+import { LogOut, Download, Trash2, Users, Save, FolderOpen, Plus, Lock, CreditCard, Check, X, Network } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -584,6 +584,88 @@ const Index = () => {
     });
   }, [elements, selectedElement]);
 
+  const autoOrganize = () => {
+    if (elements.length === 0) return;
+
+    // Encontrar todos os elementos que não são relações
+    const people = elements.filter(e => e.type !== 'relation');
+    const relations = elements.filter(e => e.type === 'relation');
+    
+    // Mapa para rastrear níveis (gerações)
+    const levels = new Map<number, number>();
+    const processed = new Set<number>();
+    
+    // Função para determinar o nível de cada pessoa
+    const determineLevel = (personId: number, level: number) => {
+      if (processed.has(personId)) return;
+      processed.add(personId);
+      levels.set(personId, Math.max(levels.get(personId) || 0, level));
+      
+      // Encontrar filhos dessa pessoa
+      relations.forEach(rel => {
+        if (rel.relationType === 'children' && rel.children) {
+          if (rel.from === personId || rel.to === personId) {
+            rel.children.forEach((childId: number) => {
+              determineLevel(childId, level + 1);
+            });
+          }
+        }
+      });
+    };
+    
+    // Encontrar pessoas sem pais (geração 0)
+    const peopleWithParents = new Set<number>();
+    relations.forEach(rel => {
+      if (rel.relationType === 'children' && rel.children) {
+        rel.children.forEach((childId: number) => peopleWithParents.add(childId));
+      }
+    });
+    
+    // Iniciar com pessoas que não têm pais
+    people.forEach(person => {
+      if (!peopleWithParents.has(person.id)) {
+        determineLevel(person.id, 0);
+      }
+    });
+    
+    // Agrupar por nível
+    const byLevel = new Map<number, GenogramElement[]>();
+    people.forEach(person => {
+      const level = levels.get(person.id) || 0;
+      if (!byLevel.has(level)) {
+        byLevel.set(level, []);
+      }
+      byLevel.get(level)!.push(person);
+    });
+    
+    // Organizar posições
+    const startY = 100;
+    const levelHeight = 150;
+    const horizontalSpacing = 120;
+    
+    const updatedElements = [...elements];
+    
+    byLevel.forEach((peopleInLevel, level) => {
+      const y = startY + level * levelHeight;
+      const totalWidth = (peopleInLevel.length - 1) * horizontalSpacing;
+      const startX = 450 - totalWidth / 2; // Centralizar
+      
+      peopleInLevel.forEach((person, index) => {
+        const x = startX + index * horizontalSpacing;
+        const elementIndex = updatedElements.findIndex(e => e.id === person.id);
+        if (elementIndex !== -1) {
+          updatedElements[elementIndex] = { ...updatedElements[elementIndex], x, y };
+        }
+      });
+    });
+    
+    setElements(updatedElements);
+    toast({
+      title: "Árvore organizada!",
+      description: "Os elementos foram reorganizados automaticamente.",
+    });
+  };
+
   const exportImage = () => {
     if (!canDownload) {
       toast({
@@ -925,6 +1007,16 @@ const Index = () => {
             <div className="bg-card rounded-xl shadow-md p-4">
               <h3 className="font-medium text-foreground mb-3">Ações</h3>
               <div className="space-y-2">
+                <Button
+                  onClick={autoOrganize}
+                  className="w-full bg-primary/10 hover:bg-primary/20 border-primary/30 text-primary"
+                  variant="outline"
+                  size="sm"
+                  disabled={elements.length === 0}
+                >
+                  <Network className="w-4 h-4 mr-2" />
+                  Organizar Automaticamente
+                </Button>
                 <Button
                   onClick={() => setShowClearModal(true)}
                   className="w-full bg-muted/50 hover:bg-muted border-muted-foreground/30"
