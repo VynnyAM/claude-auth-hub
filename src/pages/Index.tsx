@@ -124,7 +124,7 @@ const Index = () => {
 
   const handleLogout = async () => {
     await signOut();
-    navigate('/auth');
+    window.location.assign('/auth');
   };
 
   const handleCreateNew = () => {
