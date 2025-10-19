@@ -255,11 +255,26 @@ const Index = () => {
 
   const sendWhatsApp = () => {
     if (whatsappNumber) {
+      // Primeiro, baixa a imagem do genograma
+      const canvas = canvasRef.current;
+      if (canvas) {
+        const url = canvas.toDataURL('image/png');
+        const link = document.createElement('a');
+        link.download = 'genograma-familiar.png';
+        link.href = url;
+        link.click();
+      }
+      
+      // Depois abre o WhatsApp com mensagem cordial
       const cleanNumber = whatsappNumber.replace(/\D/g, '');
-      const message = encodeURIComponent("Olá! Segue o genograma solicitado.");
-      window.open(`https://wa.me/55${cleanNumber}?text=${message}`, '_blank');
-      setShowWhatsAppModal(false);
-      setWhatsappNumber('');
+      const message = encodeURIComponent("Olá! Espero que esteja bem. Segue em anexo o genograma familiar que preparei para você. A imagem foi baixada automaticamente - basta anexá-la aqui no chat. Qualquer dúvida, estou à disposição!");
+      
+      // Pequeno delay para garantir que o download iniciou antes de abrir o WhatsApp
+      setTimeout(() => {
+        window.open(`https://wa.me/55${cleanNumber}?text=${message}`, '_blank');
+        setShowWhatsAppModal(false);
+        setWhatsappNumber('');
+      }, 500);
     }
   };
 
