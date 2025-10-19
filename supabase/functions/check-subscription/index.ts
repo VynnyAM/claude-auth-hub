@@ -90,6 +90,7 @@ serve(async (req) => {
     let plan: 'basic' | 'standard' | 'premium' = 'basic';
     let subscriptionEnd = null;
     let stripeSubscriptionId = null;
+    let status = 'inactive';
 
     if (hasActiveSub) {
       const subscription = subscriptions.data[0];
@@ -99,6 +100,7 @@ serve(async (req) => {
       
       const productId = subscription.items.data[0].price.product as string;
       plan = PRODUCT_TO_PLAN[productId] || 'basic';
+      status = 'active';
       logStep("Determined subscription plan", { productId, plan });
       
       // Update subscription in database
@@ -115,25 +117,48 @@ serve(async (req) => {
         
       logStep("Database updated with active subscription");
     } else {
-      logStep("No active subscription found");
+      logStep("No active subscription found in Stripe, checking database");
       
-      // Update to inactive in database
-      await supabaseClient
+      // Check database for existing subscription
+      const { data: dbSubscription, error: dbError } = await supabaseClient
         .from('subscriptions')
-        .update({ 
-          status: 'inactive',
-          plan: 'basic',
-          stripe_customer_id: customerId,
-          stripe_subscription_id: null,
-          current_period_end: null
-        })
-        .eq('user_id', user.id);
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+      
+      if (dbError) {
+        logStep("Error fetching subscription from database", { error: dbError });
+      } else if (dbSubscription && dbSubscription.status === 'active') {
+        logStep("Found active subscription in database", { 
+          plan: dbSubscription.plan, 
+          status: dbSubscription.status,
+          end: dbSubscription.current_period_end 
+        });
+        
+        plan = dbSubscription.plan as 'basic' | 'standard' | 'premium';
+        status = 'active';
+        subscriptionEnd = dbSubscription.current_period_end;
+      } else {
+        logStep("No active subscription in database either, setting to inactive");
+        
+        // Update to inactive in database
+        await supabaseClient
+          .from('subscriptions')
+          .update({ 
+            status: 'inactive',
+            plan: 'basic',
+            stripe_customer_id: customerId,
+            stripe_subscription_id: null,
+            current_period_end: null
+          })
+          .eq('user_id', user.id);
+      }
     }
 
     return new Response(JSON.stringify({
-      subscribed: hasActiveSub,
+      subscribed: status === 'active',
       plan: plan,
-      status: hasActiveSub ? 'active' : 'inactive',
+      status: status,
       subscription_end: subscriptionEnd
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
