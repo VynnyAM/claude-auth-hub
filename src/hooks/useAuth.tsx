@@ -29,11 +29,11 @@ export const useAuth = () => {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (email: string, password: string, fullName: string) => {
+  const signUp = async (email: string, password: string, fullName: string, plan: 'basic' | 'standard' | 'premium' = 'basic') => {
     try {
       const redirectUrl = `${window.location.origin}/`;
       
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -45,6 +45,18 @@ export const useAuth = () => {
       });
 
       if (error) throw error;
+
+      // Update subscription plan after user is created
+      if (data.user) {
+        const { error: updateError } = await supabase
+          .from('subscriptions')
+          .update({ plan })
+          .eq('user_id', data.user.id);
+
+        if (updateError) {
+          console.error('Error updating subscription plan:', updateError);
+        }
+      }
 
       toast({
         title: "Conta criada com sucesso!",

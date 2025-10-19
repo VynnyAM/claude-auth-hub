@@ -11,6 +11,7 @@ const Auth = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
+  const [selectedPlan, setSelectedPlan] = useState<'basic' | 'standard' | 'premium'>('basic');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { signIn, signUp, user } = useAuth();
@@ -31,7 +32,7 @@ const Auth = () => {
         navigate('/');
       }
     } else {
-      const { error } = await signUp(email, password, fullName);
+      const { error } = await signUp(email, password, fullName, selectedPlan);
       if (!error) {
         setIsLogin(true);
         setPassword('');
@@ -78,17 +79,106 @@ const Auth = () => {
           
           <form onSubmit={handleSubmit} className="space-y-4">
             {!isLogin && (
-              <div>
-                <Label htmlFor="fullName">Nome Completo</Label>
-                <Input
-                  id="fullName"
-                  type="text"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  placeholder="Dr. João Silva"
-                  required={!isLogin}
-                />
-              </div>
+              <>
+                <div>
+                  <Label htmlFor="fullName">Nome Completo</Label>
+                  <Input
+                    id="fullName"
+                    type="text"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    placeholder="Dr. João Silva"
+                    required={!isLogin}
+                  />
+                </div>
+                
+                <div className="space-y-3">
+                  <Label>Escolha seu Plano</Label>
+                  
+                  <div 
+                    onClick={() => setSelectedPlan('basic')}
+                    className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                      selectedPlan === 'basic' 
+                        ? 'border-primary bg-primary/5' 
+                        : 'border-border hover:border-primary/50'
+                    }`}
+                  >
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="font-semibold text-lg">Básico</h3>
+                      <span className="text-2xl font-bold text-primary">R$ 40</span>
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-2">/mês</p>
+                    <ul className="space-y-1 text-sm">
+                      <li className="flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 bg-primary rounded-full"></span>
+                        Criar genogramas ilimitados
+                      </li>
+                      <li className="flex items-center gap-2 text-muted-foreground line-through">
+                        <span className="w-1.5 h-1.5 bg-muted-foreground rounded-full"></span>
+                        Salvar e carregar genogramas
+                      </li>
+                      <li className="flex items-center gap-2 text-muted-foreground line-through">
+                        <span className="w-1.5 h-1.5 bg-muted-foreground rounded-full"></span>
+                        Baixar imagens
+                      </li>
+                    </ul>
+                  </div>
+
+                  <div 
+                    onClick={() => setSelectedPlan('standard')}
+                    className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                      selectedPlan === 'standard' 
+                        ? 'border-primary bg-primary/5' 
+                        : 'border-border hover:border-primary/50'
+                    }`}
+                  >
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="font-semibold text-lg">Padrão</h3>
+                      <span className="text-2xl font-bold text-primary">R$ 50</span>
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-2">/mês</p>
+                    <ul className="space-y-1 text-sm">
+                      <li className="flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 bg-primary rounded-full"></span>
+                        Criar genogramas ilimitados
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 bg-primary rounded-full"></span>
+                        Salvar e carregar genogramas
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 bg-primary rounded-full"></span>
+                        Baixar imagens em alta qualidade
+                      </li>
+                    </ul>
+                  </div>
+
+                  <div 
+                    onClick={() => setSelectedPlan('premium')}
+                    className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                      selectedPlan === 'premium' 
+                        ? 'border-primary bg-primary/5' 
+                        : 'border-border hover:border-primary/50'
+                    }`}
+                  >
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="font-semibold text-lg">Premium</h3>
+                      <span className="text-2xl font-bold text-primary">Em breve</span>
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-2">Recursos exclusivos</p>
+                    <ul className="space-y-1 text-sm">
+                      <li className="flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 bg-primary rounded-full"></span>
+                        Todos os recursos do Padrão
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 bg-primary rounded-full"></span>
+                        Recursos exclusivos em desenvolvimento
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </>
             )}
             
             <div>

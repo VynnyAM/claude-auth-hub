@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, Download, Trash2, Users, Save, FolderOpen, Plus } from 'lucide-react';
+import { LogOut, Download, Trash2, Users, Save, FolderOpen, Plus, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useToast } from '@/hooks/use-toast';
 import {
   Dialog,
   DialogContent,
@@ -21,10 +22,13 @@ import {
 } from '@/components/ui/select';
 import { useAuth } from '@/hooks/useAuth';
 import { useGenogram, GenogramElement } from '@/hooks/useGenogram';
+import { useSubscription } from '@/hooks/useSubscription';
 
 const Index = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading, signOut } = useAuth();
+  const { canDownload, canSaveLoad } = useSubscription(user?.id);
+  const { toast } = useToast();
   const { 
     genograms, 
     currentGenogramId, 
@@ -241,6 +245,15 @@ const Index = () => {
   }, [elements, selectedElement]);
 
   const exportImage = () => {
+    if (!canDownload) {
+      toast({
+        title: "Recurso bloqueado",
+        description: "Faça upgrade para o plano Padrão para baixar imagens.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     const canvas = canvasRef.current;
     if (!canvas) return;
     
@@ -253,11 +266,31 @@ const Index = () => {
 
 
   const handleSave = async () => {
+    if (!canSaveLoad) {
+      toast({
+        title: "Recurso bloqueado",
+        description: "Faça upgrade para o plano Padrão para salvar genogramas.",
+        variant: "destructive",
+      });
+      setShowSaveModal(false);
+      return;
+    }
+    
     await saveGenogram(genogramTitle);
     setShowSaveModal(false);
   };
 
   const handleLoad = async (genogramId: string) => {
+    if (!canSaveLoad) {
+      toast({
+        title: "Recurso bloqueado",
+        description: "Faça upgrade para o plano Padrão para carregar genogramas.",
+        variant: "destructive",
+      });
+      setShowLoadModal(false);
+      return;
+    }
+    
     await loadGenogram(genogramId);
     setShowLoadModal(false);
   };
@@ -308,9 +341,10 @@ const Index = () => {
                   className="w-full"
                   variant="outline"
                   size="sm"
-                  disabled={genogramLoading}
+                  disabled={genogramLoading || !canSaveLoad}
                 >
-                  <Save className="w-4 h-4 mr-2" />
+                  {!canSaveLoad && <Lock className="w-4 h-4 mr-2" />}
+                  {canSaveLoad && <Save className="w-4 h-4 mr-2" />}
                   Salvar
                 </Button>
                 <Button
@@ -318,8 +352,10 @@ const Index = () => {
                   className="w-full"
                   variant="outline"
                   size="sm"
+                  disabled={!canSaveLoad}
                 >
-                  <FolderOpen className="w-4 h-4 mr-2" />
+                  {!canSaveLoad && <Lock className="w-4 h-4 mr-2" />}
+                  {canSaveLoad && <FolderOpen className="w-4 h-4 mr-2" />}
                   Carregar
                 </Button>
               </div>
@@ -463,8 +499,10 @@ const Index = () => {
                   className="w-full bg-muted/50 hover:bg-muted border-muted-foreground/30"
                   variant="outline"
                   size="sm"
+                  disabled={!canDownload}
                 >
-                  <Download className="w-4 h-4 mr-2" />
+                  {!canDownload && <Lock className="w-4 h-4 mr-2" />}
+                  {canDownload && <Download className="w-4 h-4 mr-2" />}
                   Baixar Imagem
                 </Button>
               </div>

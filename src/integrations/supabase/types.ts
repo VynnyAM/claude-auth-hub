@@ -96,6 +96,7 @@ export type Database = {
           created_at: string
           current_period_end: string | null
           id: string
+          plan: Database["public"]["Enums"]["subscription_plan"] | null
           status: string
           stripe_customer_id: string | null
           stripe_subscription_id: string | null
@@ -106,6 +107,7 @@ export type Database = {
           created_at?: string
           current_period_end?: string | null
           id?: string
+          plan?: Database["public"]["Enums"]["subscription_plan"] | null
           status?: string
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
@@ -116,6 +118,7 @@ export type Database = {
           created_at?: string
           current_period_end?: string | null
           id?: string
+          plan?: Database["public"]["Enums"]["subscription_plan"] | null
           status?: string
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
@@ -132,7 +135,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      subscription_plan: "basic" | "standard" | "premium"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -259,6 +262,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      subscription_plan: ["basic", "standard", "premium"],
+    },
   },
 } as const
