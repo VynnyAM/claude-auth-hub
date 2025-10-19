@@ -345,7 +345,10 @@ const Index = () => {
 
   // Filter elements based on search
   const filteredElements = useMemo(() => {
-    if (!searchTerm.trim()) return elements;
+    if (!searchTerm.trim()) {
+      // When no search, ensure all elements are unhighlighted (normal state)
+      return elements.map(el => ({ ...el, highlighted: undefined }));
+    }
     
     return elements.map(el => {
       if (el.type === 'relation') return el;
