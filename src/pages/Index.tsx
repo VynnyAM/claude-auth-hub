@@ -131,7 +131,7 @@ const Index = () => {
     if (!canCreateMultiple && genograms.length >= 1) {
       toast({
         title: "Limite atingido",
-        description: "O plano Básico permite criar apenas 1 genograma. Faça upgrade para o plano Padrão para criar genogramas ilimitados.",
+        description: "O plano Básico permite criar apenas 1 genograma. Faça upgrade para o plano Profissional para criar genogramas ilimitados.",
         variant: "destructive",
       });
       return;
@@ -326,7 +326,7 @@ const Index = () => {
     if (!canDownload) {
       toast({
         title: "Recurso bloqueado",
-        description: "Faça upgrade para o plano Padrão para baixar imagens.",
+        description: "Faça upgrade para o plano Profissional para baixar imagens.",
         variant: "destructive",
       });
       return;
@@ -347,7 +347,7 @@ const Index = () => {
     if (!canSaveLoad) {
       toast({
         title: "Recurso bloqueado",
-        description: "Faça upgrade para o plano Padrão para salvar genogramas.",
+        description: "Faça upgrade para o plano Profissional para salvar genogramas.",
         variant: "destructive",
       });
       setShowSaveModal(false);
@@ -362,7 +362,7 @@ const Index = () => {
     if (!canSaveLoad) {
       toast({
         title: "Recurso bloqueado",
-        description: "Faça upgrade para o plano Padrão para carregar genogramas.",
+        description: "Faça upgrade para o plano Profissional para carregar genogramas.",
         variant: "destructive",
       });
       setShowLoadModal(false);
@@ -710,7 +710,7 @@ const Index = () => {
             <DialogTitle className="text-2xl">Gerenciar Assinatura</DialogTitle>
             <DialogDescription>
               {subscription?.status === 'active' 
-                ? `Você está no plano ${subscription.plan === 'basic' ? 'Básico' : 'Padrão'}` 
+                ? `Você está no plano ${subscription.plan === 'basic' ? 'Básico' : 'Profissional'}` 
                 : 'Escolha um plano para desbloquear todos os recursos'}
             </DialogDescription>
           </DialogHeader>
@@ -776,7 +776,7 @@ const Index = () => {
               )}
             </div>
 
-            {/* Plano Padrão */}
+            {/* Plano Profissional */}
             <div className={`bg-card rounded-xl shadow-lg p-6 border-2 transition-all ${
               subscription?.plan === 'standard' 
                 ? 'border-primary bg-primary/5' 
@@ -790,7 +790,7 @@ const Index = () => {
                 </div>
               )}
               <div className="mb-4">
-                <h3 className="text-2xl font-semibold text-foreground mb-2">Padrão</h3>
+                <h3 className="text-2xl font-semibold text-foreground mb-2">Profissional</h3>
                 <div className="flex items-baseline gap-1">
                   <span className="text-4xl font-bold text-primary">R$ 50</span>
                   <span className="text-muted-foreground">/mês</span>
@@ -817,7 +817,7 @@ const Index = () => {
                   className="w-full"
                 >
                   <CreditCard className="w-4 h-4 mr-2" />
-                  {subscription?.plan === 'basic' ? 'Fazer Upgrade' : 'Assinar Plano Padrão'}
+                  {subscription?.plan === 'basic' ? 'Fazer Upgrade' : 'Assinar Plano Profissional'}
                 </Button>
               )}
             </div>
