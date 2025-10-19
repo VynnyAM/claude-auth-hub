@@ -36,7 +36,7 @@ export const useSubscription = (userId: string | undefined) => {
     fetchSubscription();
   }, [userId]);
 
-  const canDownload = subscription?.plan === 'standard' || subscription?.plan === 'premium';
+  const canDownload = subscription?.plan === 'basic' || subscription?.plan === 'standard' || subscription?.plan === 'premium';
   const canSaveLoad = subscription?.plan === 'standard' || subscription?.plan === 'premium';
   const canCreateMultiple = subscription?.plan === 'standard' || subscription?.plan === 'premium';
 
