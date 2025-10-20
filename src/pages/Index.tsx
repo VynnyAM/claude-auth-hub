@@ -474,18 +474,19 @@ const Index = () => {
           // ETAPA 2: Ponto fixo de conexão no centro da linha do casamento
           const connectionPointX = (leftParent.x + rightParent.x) / 2;
           
-          // ETAPA 3: Calcular posição da linha horizontal dos irmãos
-          const minChildY = Math.min(...children.map(c => c!.y));
-          const siblingsLineY = minChildY - 50;
+          // ETAPA 3: Posição FIXA da linha horizontal dos irmãos
+          // Esta linha está sempre a 80px abaixo da linha de casamento
+          const FIXED_VERTICAL_DISTANCE = 80;
+          const siblingsLineY = marriageLineY + FIXED_VERTICAL_DISTANCE;
           
-          // ETAPA 4: Linha vertical principal - desce do casamento até os filhos
-          // Esta linha é SEMPRE conectada ao ponto fixo da linha do casamento
+          // ETAPA 4: Linha vertical principal - SEMPRE fixa do casamento até a linha dos irmãos
+          // Esta linha é SEMPRE conectada ao ponto fixo da linha do casamento e tem comprimento fixo
           ctx.beginPath();
           ctx.moveTo(connectionPointX, marriageLineY);
           ctx.lineTo(connectionPointX, siblingsLineY);
           ctx.stroke();
           
-          // ETAPA 5: Linha horizontal dos irmãos
+          // ETAPA 5: Linha horizontal dos irmãos (em posição fixa)
           const childrenXPositions = children.map(c => c!.x).sort((a, b) => a - b);
           const leftmostChildX = childrenXPositions[0];
           const rightmostChildX = childrenXPositions[childrenXPositions.length - 1];
@@ -496,6 +497,7 @@ const Index = () => {
           ctx.stroke();
           
           // ETAPA 6: Linhas verticais individuais de cada filho
+          // Estas linhas se adaptam da posição fixa até onde o filho estiver
           children.forEach((child) => {
             if (child) {
               ctx.beginPath();
