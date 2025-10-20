@@ -89,7 +89,7 @@ const Auth = () => {
         if (!error) {
           toast({
             title: "Conta criada com sucesso!",
-            description: "Faça login com suas credenciais.",
+            description: "Você ganhou 3 dias de teste grátis do Plano Básico! Faça login para começar.",
           });
           setIsLogin(true);
           setPassword('');
@@ -144,6 +144,12 @@ const Auth = () => {
             <p className="flex items-center gap-2">
               <span className="w-2 h-2 bg-green-400 rounded-full"></span>
               Compartilhe com seus clientes facilmente
+            </p>
+          </div>
+          
+          <div className="bg-gradient-to-r from-primary/10 to-accent/10 rounded-lg p-4 border-2 border-primary/20">
+            <p className="text-primary font-medium text-center">
+              🎁 Teste grátis de 3 dias do Plano Básico ao criar sua conta!
             </p>
           </div>
         </div>
