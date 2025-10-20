@@ -172,11 +172,56 @@ const Index = () => {
   };
 
   const addElement = (type: string) => {
+    // Encontrar posição livre para evitar sobreposição
+    const findFreePosition = () => {
+      const baseX = 200;
+      const baseY = 200;
+      const spacing = 100;
+      const checkRadius = 60; // Raio para verificar sobreposição
+      
+      // Se não houver elementos, usar posição base
+      if (elements.length === 0) {
+        return { x: baseX, y: baseY };
+      }
+      
+      // Procurar posição livre em espiral
+      for (let distance = 0; distance < 1000; distance += spacing) {
+        for (let angle = 0; angle < 360; angle += 45) {
+          const rad = (angle * Math.PI) / 180;
+          const testX = baseX + distance * Math.cos(rad);
+          const testY = baseY + distance * Math.sin(rad);
+          
+          // Verificar se há sobreposição com elementos existentes
+          const hasOverlap = elements.some(el => {
+            if (el.type === 'relation') return false;
+            const dx = el.x - testX;
+            const dy = el.y - testY;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            return dist < checkRadius;
+          });
+          
+          if (!hasOverlap) {
+            return { x: testX, y: testY };
+          }
+        }
+      }
+      
+      // Fallback: posição ao lado do último elemento
+      const lastPerson = elements.filter(e => e.type !== 'relation').pop();
+      if (lastPerson) {
+        return { x: lastPerson.x + spacing, y: lastPerson.y };
+      }
+      
+      return { x: baseX, y: baseY };
+    };
+    
+    const { x, y } = findFreePosition();
+    
     const newElement: GenogramElement = {
       id: Date.now(),
       type,
-      x: 200,
-      y: 200,
+      x,
+      y,
       name: '',
       age: '',
       status: 'alive'
@@ -978,136 +1023,193 @@ const Index = () => {
   const autoOrganize = () => {
     if (elements.length === 0) return;
 
-    // Separar pessoas e relações existentes
+    // Separar pessoas e relações
     const people = elements.filter(e => e.type !== 'relation');
-    const existingRelations = elements.filter(e => e.type === 'relation');
+    const relations = elements.filter(e => e.type === 'relation' && e.relationType === 'children');
     
-    // Ordenar pessoas por posição Y (de cima para baixo = gerações mais antigas primeiro)
-    const sortedByY = [...people].sort((a, b) => a.y - b.y);
+    if (people.length === 0) return;
     
-    // Agrupar em níveis/gerações baseado na posição Y
-    const levelThreshold = 100; // Pessoas com diferença Y < 100px estão no mesmo nível
-    const generations: GenogramElement[][] = [];
+    // Construir grafo de relacionamentos pai-filho
+    const childrenMap = new Map<number, number[]>(); // personId -> [childIds]
+    const parentsMap = new Map<number, number[]>(); // childId -> [parentIds]
+    const couples = new Map<number, number>(); // personId -> partnerId
     
-    sortedByY.forEach(person => {
-      let addedToGeneration = false;
-      
-      // Tentar adicionar à geração existente
-      for (let i = 0; i < generations.length; i++) {
-        const generationAvgY = generations[i].reduce((sum, p) => sum + p.y, 0) / generations[i].length;
-        if (Math.abs(person.y - generationAvgY) < levelThreshold) {
-          generations[i].push(person);
-          addedToGeneration = true;
-          break;
+    relations.forEach(rel => {
+      if (rel.children && rel.children.length > 0) {
+        const parents = [rel.from, rel.to].filter(id => id !== undefined) as number[];
+        
+        // Registrar casal
+        if (rel.from && rel.to) {
+          couples.set(rel.from, rel.to);
+          couples.set(rel.to, rel.from);
         }
-      }
-      
-      // Criar nova geração se necessário
-      if (!addedToGeneration) {
-        generations.push([person]);
+        
+        // Registrar filhos para cada pai
+        parents.forEach(parentId => {
+          if (!childrenMap.has(parentId)) {
+            childrenMap.set(parentId, []);
+          }
+          childrenMap.get(parentId)!.push(...rel.children!);
+        });
+        
+        // Registrar pais para cada filho
+        rel.children.forEach(childId => {
+          if (!parentsMap.has(childId)) {
+            parentsMap.set(childId, []);
+          }
+          parentsMap.get(childId)!.push(...parents);
+        });
       }
     });
     
-    // Criar relações de pais -> filhos entre gerações consecutivas
-    const newRelations: GenogramElement[] = [];
+    // Identificar gerações usando BFS a partir de pessoas sem pais (raízes)
+    const roots = people.filter(p => !parentsMap.has(p.id));
+    const generations = new Map<number, number>(); // personId -> generation level
+    const visited = new Set<number>();
     
-    for (let g = 0; g < generations.length - 1; g++) {
-      const currentGeneration = generations[g];
-      const nextGeneration = generations[g + 1];
+    // Função para processar uma pessoa e seus descendentes
+    const assignGeneration = (personId: number, level: number) => {
+      if (visited.has(personId)) return;
+      visited.add(personId);
       
-      if (currentGeneration.length === 0 || nextGeneration.length === 0) continue;
+      const currentLevel = generations.get(personId);
+      if (currentLevel === undefined || level < currentLevel) {
+        generations.set(personId, level);
+      }
       
-      // Identificar casais na geração atual (homem + mulher próximos)
-      const couples: Array<{ male: GenogramElement; female: GenogramElement }> = [];
-      const pairedPeople = new Set<number>();
+      // Processar parceiro no mesmo nível
+      const partnerId = couples.get(personId);
+      if (partnerId && !visited.has(partnerId)) {
+        generations.set(partnerId, level);
+        visited.add(partnerId);
+      }
       
-      // Ordenar por posição X para facilitar identificação de casais
-      const sortedByX = [...currentGeneration].sort((a, b) => a.x - b.x);
+      // Processar filhos no próximo nível
+      const children = childrenMap.get(personId);
+      if (children) {
+        children.forEach(childId => {
+          assignGeneration(childId, level + 1);
+        });
+      }
+    };
+    
+    // Se não houver raízes, usar todas as pessoas
+    if (roots.length === 0) {
+      people.forEach(p => generations.set(p.id, 0));
+    } else {
+      roots.forEach(root => assignGeneration(root.id, 0));
       
-      for (let i = 0; i < sortedByX.length - 1; i++) {
-        const person1 = sortedByX[i];
-        const person2 = sortedByX[i + 1];
-        
-        // Verificar se são de gêneros diferentes e estão próximos (< 180px)
-        if (!pairedPeople.has(person1.id) && !pairedPeople.has(person2.id)) {
-          if (person1.type !== person2.type && Math.abs(person1.x - person2.x) < 180) {
-            const male = person1.type === 'male' ? person1 : person2;
-            const female = person1.type === 'female' ? person1 : person2;
-            
-            couples.push({ male, female });
-            pairedPeople.add(person1.id);
-            pairedPeople.add(person2.id);
-          }
+      // Processar pessoas não visitadas (possivelmente em árvores separadas)
+      people.forEach(p => {
+        if (!generations.has(p.id)) {
+          assignGeneration(p.id, 0);
         }
-      }
-      
-      // Para cada casal, criar relação com todos os filhos da próxima geração
-      if (couples.length > 0) {
-        couples.forEach(couple => {
-          const newRelation: GenogramElement = {
-            id: Date.now() + Math.random(),
-            type: 'relation',
-            relationType: 'children',
-            from: couple.male.id,
-            to: couple.female.id,
-            x: 0,
-            y: 0,
-            children: nextGeneration.map(child => child.id)
-          };
-          newRelations.push(newRelation);
-        });
-      } else {
-        // Se não houver casais, criar relações individuais
-        currentGeneration.forEach(parent => {
-          if (!pairedPeople.has(parent.id)) {
-            const newRelation: GenogramElement = {
-              id: Date.now() + Math.random(),
-              type: 'relation',
-              relationType: 'children',
-              from: parent.id,
-              to: undefined,
-              x: 0,
-              y: 0,
-              children: nextGeneration.map(child => child.id)
-            };
-            newRelations.push(newRelation);
-          }
-        });
-      }
+      });
     }
     
-    // Organizar visualmente cada geração
+    // Agrupar pessoas por geração
+    const generationGroups = new Map<number, GenogramElement[]>();
+    people.forEach(person => {
+      const level = generations.get(person.id) || 0;
+      if (!generationGroups.has(level)) {
+        generationGroups.set(level, []);
+      }
+      generationGroups.get(level)!.push(person);
+    });
+    
+    // Organizar layout hierárquico
     const startY = 120;
-    const levelHeight = 180;
-    const horizontalSpacing = 140;
+    const levelHeight = 200;
+    const baseSpacing = 120;
+    const coupleSpacing = 80; // Espaçamento entre parceiros
     
     const updatedPeople: GenogramElement[] = [];
+    const sortedLevels = Array.from(generationGroups.keys()).sort((a, b) => a - b);
     
-    generations.forEach((generation, levelIndex) => {
+    sortedLevels.forEach((level, levelIndex) => {
+      const generation = generationGroups.get(level)!;
       const y = startY + levelIndex * levelHeight;
       
-      // Ordenar por X para manter ordem horizontal
-      const sortedGen = [...generation].sort((a, b) => a.x - b.x);
+      // Agrupar casais e pessoas solteiras
+      const processed = new Set<number>();
+      const groups: GenogramElement[][] = [];
       
-      // Calcular largura total e posição inicial para centralizar
-      const totalWidth = (sortedGen.length - 1) * horizontalSpacing;
-      const startX = 450 - totalWidth / 2;
+      generation.forEach(person => {
+        if (processed.has(person.id)) return;
+        
+        const partnerId = couples.get(person.id);
+        if (partnerId) {
+          const partner = generation.find(p => p.id === partnerId);
+          if (partner && !processed.has(partnerId)) {
+            // Garantir que homem vem primeiro (esquerda)
+            if (person.type === 'male') {
+              groups.push([person, partner]);
+            } else {
+              groups.push([partner, person]);
+            }
+            processed.add(person.id);
+            processed.add(partnerId);
+            return;
+          }
+        }
+        
+        // Pessoa solteira
+        groups.push([person]);
+        processed.add(person.id);
+      });
       
-      sortedGen.forEach((person, index) => {
-        updatedPeople.push({
-          ...person,
-          x: startX + index * horizontalSpacing,
-          y: y
+      // Ordenar filhos por idade (mais velhos à esquerda) se possível
+      groups.forEach(group => {
+        group.sort((a, b) => {
+          const ageA = a.age ? parseInt(a.age) : 0;
+          const ageB = b.age ? parseInt(b.age) : 0;
+          return ageB - ageA; // Decrescente = mais velhos primeiro
         });
+      });
+      
+      // Calcular largura total e posicionar
+      const totalWidth = groups.reduce((sum, group) => {
+        return sum + (group.length === 2 ? coupleSpacing : 0) + baseSpacing;
+      }, -baseSpacing);
+      
+      let currentX = 450 - totalWidth / 2;
+      
+      groups.forEach(group => {
+        if (group.length === 2) {
+          // Casal
+          updatedPeople.push({
+            ...group[0],
+            x: currentX,
+            y: y
+          });
+          updatedPeople.push({
+            ...group[1],
+            x: currentX + coupleSpacing,
+            y: y
+          });
+          currentX += coupleSpacing + baseSpacing;
+        } else {
+          // Pessoa solteira
+          updatedPeople.push({
+            ...group[0],
+            x: currentX,
+            y: y
+          });
+          currentX += baseSpacing;
+        }
       });
     });
     
-    // Combinar pessoas atualizadas com novas relações
-    setElements([...updatedPeople, ...newRelations]);
+    // Manter apenas as relações existentes do tipo 'children'
+    const existingChildrenRelations = elements.filter(
+      e => e.type === 'relation' && e.relationType === 'children'
+    );
+    
+    setElements([...updatedPeople, ...existingChildrenRelations]);
     
     toast({
-      title: "Árvore organizada!",
-      description: "Estrutura hierárquica criada automaticamente seguindo o padrão de genograma.",
+      title: "Genograma organizado!",
+      description: "Estrutura hierárquica com pais no mesmo nível e filhos ordenados por idade.",
     });
   };
 
