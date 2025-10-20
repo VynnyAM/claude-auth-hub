@@ -438,102 +438,97 @@ const Index = () => {
       const to = filteredElements.find(e => e.id === rel.to);
       
       // Relação de filhos (padrão hierárquico de genograma)
-      if (rel.relationType === 'children' && rel.children) {
+      if (rel.relationType === 'children' && rel.children && rel.children.length > 0) {
+        ctx.strokeStyle = '#4ade80';
+        ctx.lineWidth = 2;
+        
+        // Obter todos os filhos
+        const children = rel.children
+          .map((childId: number) => filteredElements.find(e => e.id === childId))
+          .filter(Boolean);
+        
+        if (children.length === 0) return;
+        
+        // Caso 1: Casal (ambos os pais presentes)
         if (from && to) {
-          // 1. Linha horizontal conectando o casal (pais) no centro dos símbolos
-          const coupleY = (from.y + to.y) / 2; // Centro vertical entre os dois símbolos
+          // ETAPA 1: Linha horizontal do casamento dos pais
+          // Esta linha conecta os dois pais e é a base da estrutura familiar
+          const leftParent = from.x < to.x ? from : to;
+          const rightParent = from.x < to.x ? to : from;
+          const marriageLineY = (leftParent.y + rightParent.y) / 2;
           
-          ctx.strokeStyle = '#4ade80';
-          ctx.lineWidth = 2;
           ctx.beginPath();
-          ctx.moveTo(from.x, coupleY);
-          ctx.lineTo(to.x, coupleY);
+          ctx.moveTo(leftParent.x, marriageLineY);
+          ctx.lineTo(rightParent.x, marriageLineY);
           ctx.stroke();
           
-          // Ponto médio da linha do casal
-          const coupleMidX = (from.x + to.x) / 2;
+          // ETAPA 2: Ponto fixo de conexão no centro da linha do casamento
+          const connectionPointX = (leftParent.x + rightParent.x) / 2;
           
-          // Obter todos os filhos para calcular a linha horizontal dos filhos
-          const children = rel.children
-            .map((childId: number) => filteredElements.find(e => e.id === childId))
-            .filter(Boolean);
+          // ETAPA 3: Calcular posição da linha horizontal dos irmãos
+          const minChildY = Math.min(...children.map(c => c!.y));
+          const siblingsLineY = minChildY - 50;
           
-          if (children.length > 0) {
-            // Calcular a posição Y da linha horizontal dos filhos (um pouco acima do filho mais alto)
-            const minChildY = Math.min(...children.map(c => c!.y));
-            const childrenLineY = minChildY - 40; // Aumentado para dar mais espaço
-            
-            // 2. Linha vertical descendo do casal até a linha dos filhos
-            ctx.beginPath();
-            ctx.moveTo(coupleMidX, coupleY);
-            ctx.lineTo(coupleMidX, childrenLineY);
-            ctx.stroke();
-            
-            // Calcular os limites da linha horizontal dos filhos
-            const childrenXPositions = children.map(c => c!.x).sort((a, b) => a - b);
-            const minChildX = childrenXPositions[0];
-            const maxChildX = childrenXPositions[childrenXPositions.length - 1];
-            
-            // 3. Linha horizontal conectando todos os filhos
-            ctx.beginPath();
-            ctx.moveTo(minChildX, childrenLineY);
-            ctx.lineTo(maxChildX, childrenLineY);
-            ctx.stroke();
-            
-            // 4. Linhas verticais de cada filho até a linha horizontal
-            children.forEach((child) => {
-              if (child) {
-                ctx.beginPath();
-                ctx.moveTo(child.x, childrenLineY);
-                ctx.lineTo(child.x, child.y - 25);
-                ctx.stroke();
-              }
-            });
-          }
-        } else if (from && rel.children.length > 0) {
-          // Apenas um pai selecionado
+          // ETAPA 4: Linha vertical principal - desce do casamento até os filhos
+          // Esta linha é SEMPRE conectada ao ponto fixo da linha do casamento
+          ctx.beginPath();
+          ctx.moveTo(connectionPointX, marriageLineY);
+          ctx.lineTo(connectionPointX, siblingsLineY);
+          ctx.stroke();
+          
+          // ETAPA 5: Linha horizontal dos irmãos
+          const childrenXPositions = children.map(c => c!.x).sort((a, b) => a - b);
+          const leftmostChildX = childrenXPositions[0];
+          const rightmostChildX = childrenXPositions[childrenXPositions.length - 1];
+          
+          ctx.beginPath();
+          ctx.moveTo(leftmostChildX, siblingsLineY);
+          ctx.lineTo(rightmostChildX, siblingsLineY);
+          ctx.stroke();
+          
+          // ETAPA 6: Linhas verticais individuais de cada filho
+          children.forEach((child) => {
+            if (child) {
+              ctx.beginPath();
+              ctx.moveTo(child.x, siblingsLineY);
+              ctx.lineTo(child.x, child.y - 25);
+              ctx.stroke();
+            }
+          });
+        } 
+        // Caso 2: Pai/mãe solteiro(a)
+        else if (from) {
           const parentY = from.y + 25;
           
-          // Obter todos os filhos
-          const children = rel.children
-            .map((childId: number) => filteredElements.find(e => e.id === childId))
-            .filter(Boolean);
+          // Calcular posição da linha horizontal dos irmãos
+          const minChildY = Math.min(...children.map(c => c!.y));
+          const siblingsLineY = minChildY - 50;
           
-          if (children.length > 0) {
-            ctx.strokeStyle = '#4ade80';
-            ctx.lineWidth = 2;
-            
-            // Calcular a posição Y da linha horizontal dos filhos
-            const minChildY = Math.min(...children.map(c => c!.y));
-            const childrenLineY = minChildY - 35;
-            
-            // 1. Linha vertical do pai até a linha dos filhos
-            ctx.beginPath();
-            ctx.moveTo(from.x, parentY);
-            ctx.lineTo(from.x, childrenLineY);
-            ctx.stroke();
-            
-            // Calcular os limites da linha horizontal dos filhos
-            const childrenXPositions = children.map(c => c!.x).sort((a, b) => a - b);
-            const minChildX = childrenXPositions[0];
-            const maxChildX = childrenXPositions[childrenXPositions.length - 1];
-            
-            // 2. Linha horizontal conectando todos os filhos
-            ctx.beginPath();
-            ctx.moveTo(minChildX, childrenLineY);
-            ctx.lineTo(maxChildX, childrenLineY);
-            ctx.stroke();
-            
-            // 3. Linhas verticais de cada filho até a linha horizontal
-            children.forEach((child) => {
-              if (child) {
-                ctx.beginPath();
-                ctx.moveTo(child.x, childrenLineY);
-                ctx.lineTo(child.x, child.y - 25);
-                ctx.stroke();
-              }
-            });
-          }
+          // Linha vertical do pai/mãe até os filhos
+          ctx.beginPath();
+          ctx.moveTo(from.x, parentY);
+          ctx.lineTo(from.x, siblingsLineY);
+          ctx.stroke();
+          
+          // Linha horizontal dos irmãos
+          const childrenXPositions = children.map(c => c!.x).sort((a, b) => a - b);
+          const leftmostChildX = childrenXPositions[0];
+          const rightmostChildX = childrenXPositions[childrenXPositions.length - 1];
+          
+          ctx.beginPath();
+          ctx.moveTo(leftmostChildX, siblingsLineY);
+          ctx.lineTo(rightmostChildX, siblingsLineY);
+          ctx.stroke();
+          
+          // Linhas verticais individuais de cada filho
+          children.forEach((child) => {
+            if (child) {
+              ctx.beginPath();
+              ctx.moveTo(child.x, siblingsLineY);
+              ctx.lineTo(child.x, child.y - 25);
+              ctx.stroke();
+            }
+          });
         }
         return;
       }
