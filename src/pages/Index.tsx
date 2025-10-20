@@ -845,6 +845,30 @@ const Index = () => {
           ctx.strokeStyle = '#dc2626';
         } else if (rel.relationType === 'manipulation') {
           ctx.strokeStyle = '#4f46e5';
+          
+          // Setas de pressão psicológica
+          const manipArrowAngle = Math.atan2(to.y - from.y, to.x - from.x);
+          const manipArrowDist = Math.sqrt(Math.pow(to.x - from.x, 2) + Math.pow(to.y - from.y, 2));
+          const manipMidX = from.x + (manipArrowDist / 2) * Math.cos(manipArrowAngle);
+          const manipMidY = from.y + (manipArrowDist / 2) * Math.sin(manipArrowAngle);
+          
+          // Seta principal
+          ctx.moveTo(from.x, from.y);
+          ctx.lineTo(to.x, to.y);
+          ctx.stroke();
+          
+          // Desenhar seta na direção do manipulado
+          ctx.beginPath();
+          ctx.moveTo(manipMidX, manipMidY);
+          ctx.lineTo(manipMidX - 10 * Math.cos(manipArrowAngle - Math.PI / 6), manipMidY - 10 * Math.sin(manipArrowAngle - Math.PI / 6));
+          ctx.moveTo(manipMidX, manipMidY);
+          ctx.lineTo(manipMidX - 10 * Math.cos(manipArrowAngle + Math.PI / 6), manipMidY - 10 * Math.sin(manipArrowAngle + Math.PI / 6));
+          ctx.stroke();
+          
+          ctx.setLineDash([]);
+          ctx.strokeStyle = '#dc2626';
+        } else if (rel.relationType === 'hostility') {
+          ctx.strokeStyle = '#dc2626';
           ctx.lineWidth = 2;
           // Linha espiral
           const spirals = 3;
@@ -863,6 +887,11 @@ const Index = () => {
             if (i === 0) ctx.moveTo(perpX, perpY);
             else ctx.lineTo(perpX, perpY);
           }
+        } else if (rel.relationType === 'siblings') {
+          ctx.strokeStyle = '#3b82f6'; // Cor azul para irmãos
+          ctx.lineWidth = 2;
+          ctx.moveTo(from.x, from.y);
+          ctx.lineTo(to.x, to.y);
         }
         
         ctx.stroke();
@@ -1487,6 +1516,14 @@ const Index = () => {
                   size="sm"
                 >
                   Manipulação
+                </Button>
+                <Button
+                  onClick={() => addRelation('siblings')}
+                  className="w-full bg-blue-500/10 hover:bg-blue-500/20 border-blue-500/30 text-blue-700"
+                  variant="outline"
+                  size="sm"
+                >
+                  Irmãos
                 </Button>
               </div>
             </div>
