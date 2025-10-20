@@ -486,14 +486,18 @@ const Index = () => {
           ctx.lineTo(connectionPointX, siblingsLineY);
           ctx.stroke();
           
-          // ETAPA 5: Linha horizontal dos irmãos (em posição fixa)
+          // ETAPA 5: Linha horizontal dos irmãos (garante conexão com a linha vertical central)
           const childrenXPositions = children.map(c => c!.x).sort((a, b) => a - b);
           const leftmostChildX = childrenXPositions[0];
           const rightmostChildX = childrenXPositions[childrenXPositions.length - 1];
           
+          // Inclui o ponto de conexão central para evitar desacoplamento (caso de 1 filho ou filhos deslocados)
+          const siblingsStartX = Math.min(leftmostChildX, connectionPointX);
+          const siblingsEndX = Math.max(rightmostChildX, connectionPointX);
+          
           ctx.beginPath();
-          ctx.moveTo(leftmostChildX, siblingsLineY);
-          ctx.lineTo(rightmostChildX, siblingsLineY);
+          ctx.moveTo(siblingsStartX, siblingsLineY);
+          ctx.lineTo(siblingsEndX, siblingsLineY);
           ctx.stroke();
           
           // ETAPA 6: Linhas verticais individuais de cada filho
@@ -521,10 +525,18 @@ const Index = () => {
           ctx.lineTo(from.x, siblingsLineY);
           ctx.stroke();
           
-          // Linha horizontal dos irmãos
+          // Linha horizontal dos irmãos (garante conexão com a linha vertical do pai/mãe)
           const childrenXPositions = children.map(c => c!.x).sort((a, b) => a - b);
           const leftmostChildX = childrenXPositions[0];
           const rightmostChildX = childrenXPositions[childrenXPositions.length - 1];
+
+          const siblingsStartX = Math.min(leftmostChildX, from.x);
+          const siblingsEndX = Math.max(rightmostChildX, from.x);
+          
+          ctx.beginPath();
+          ctx.moveTo(siblingsStartX, siblingsLineY);
+          ctx.lineTo(siblingsEndX, siblingsLineY);
+          ctx.stroke();
           
           ctx.beginPath();
           ctx.moveTo(leftmostChildX, siblingsLineY);
