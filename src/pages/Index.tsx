@@ -392,49 +392,103 @@ const Index = () => {
       const from = filteredElements.find(e => e.id === rel.from);
       const to = filteredElements.find(e => e.id === rel.to);
       
-      // Relação de filhos (linhas verticais)
+      // Relação de filhos (padrão hierárquico de genograma)
       if (rel.relationType === 'children' && rel.children) {
         if (from && to) {
-          // Linha horizontal entre os pais
-          const midX = (from.x + to.x) / 2;
-          const midY = Math.min(from.y, to.y) + 40;
+          // 1. Linha horizontal conectando o casal (pais)
+          const coupleY = Math.max(from.y, to.y) + 25; // Abaixo do casal
           
           ctx.strokeStyle = '#4ade80';
           ctx.lineWidth = 2;
           ctx.beginPath();
-          ctx.moveTo(from.x, from.y + 25);
-          ctx.lineTo(from.x, midY);
-          ctx.lineTo(to.x, midY);
-          ctx.lineTo(to.x, to.y + 25);
+          ctx.moveTo(from.x, coupleY);
+          ctx.lineTo(to.x, coupleY);
           ctx.stroke();
           
-          // Linhas verticais para cada filho
-          rel.children.forEach((childId: number) => {
-            const child = filteredElements.find(e => e.id === childId);
-            if (child) {
-              ctx.beginPath();
-              ctx.moveTo(midX, midY);
-              ctx.lineTo(child.x, child.y - 25);
-              ctx.stroke();
-            }
-          });
+          // Ponto médio da linha do casal
+          const coupleMidX = (from.x + to.x) / 2;
+          
+          // Obter todos os filhos para calcular a linha horizontal dos filhos
+          const children = rel.children
+            .map((childId: number) => filteredElements.find(e => e.id === childId))
+            .filter(Boolean);
+          
+          if (children.length > 0) {
+            // Calcular a posição Y da linha horizontal dos filhos (um pouco acima do filho mais alto)
+            const minChildY = Math.min(...children.map(c => c!.y));
+            const childrenLineY = minChildY - 35;
+            
+            // 2. Linha vertical descendo do casal até a linha dos filhos
+            ctx.beginPath();
+            ctx.moveTo(coupleMidX, coupleY);
+            ctx.lineTo(coupleMidX, childrenLineY);
+            ctx.stroke();
+            
+            // Calcular os limites da linha horizontal dos filhos
+            const childrenXPositions = children.map(c => c!.x).sort((a, b) => a - b);
+            const minChildX = childrenXPositions[0];
+            const maxChildX = childrenXPositions[childrenXPositions.length - 1];
+            
+            // 3. Linha horizontal conectando todos os filhos
+            ctx.beginPath();
+            ctx.moveTo(minChildX, childrenLineY);
+            ctx.lineTo(maxChildX, childrenLineY);
+            ctx.stroke();
+            
+            // 4. Linhas verticais de cada filho até a linha horizontal
+            children.forEach((child) => {
+              if (child) {
+                ctx.beginPath();
+                ctx.moveTo(child.x, childrenLineY);
+                ctx.lineTo(child.x, child.y - 25);
+                ctx.stroke();
+              }
+            });
+          }
         } else if (from && rel.children.length > 0) {
           // Apenas um pai selecionado
-          const baseY = from.y + 40;
+          const parentY = from.y + 25;
           
-          rel.children.forEach((childId: number) => {
-            const child = filteredElements.find(e => e.id === childId);
-            if (child) {
-              ctx.strokeStyle = '#4ade80';
-              ctx.lineWidth = 2;
-              ctx.beginPath();
-              ctx.moveTo(from.x, from.y + 25);
-              ctx.lineTo(from.x, baseY);
-              ctx.lineTo(child.x, baseY);
-              ctx.lineTo(child.x, child.y - 25);
-              ctx.stroke();
-            }
-          });
+          // Obter todos os filhos
+          const children = rel.children
+            .map((childId: number) => filteredElements.find(e => e.id === childId))
+            .filter(Boolean);
+          
+          if (children.length > 0) {
+            ctx.strokeStyle = '#4ade80';
+            ctx.lineWidth = 2;
+            
+            // Calcular a posição Y da linha horizontal dos filhos
+            const minChildY = Math.min(...children.map(c => c!.y));
+            const childrenLineY = minChildY - 35;
+            
+            // 1. Linha vertical do pai até a linha dos filhos
+            ctx.beginPath();
+            ctx.moveTo(from.x, parentY);
+            ctx.lineTo(from.x, childrenLineY);
+            ctx.stroke();
+            
+            // Calcular os limites da linha horizontal dos filhos
+            const childrenXPositions = children.map(c => c!.x).sort((a, b) => a - b);
+            const minChildX = childrenXPositions[0];
+            const maxChildX = childrenXPositions[childrenXPositions.length - 1];
+            
+            // 2. Linha horizontal conectando todos os filhos
+            ctx.beginPath();
+            ctx.moveTo(minChildX, childrenLineY);
+            ctx.lineTo(maxChildX, childrenLineY);
+            ctx.stroke();
+            
+            // 3. Linhas verticais de cada filho até a linha horizontal
+            children.forEach((child) => {
+              if (child) {
+                ctx.beginPath();
+                ctx.moveTo(child.x, childrenLineY);
+                ctx.lineTo(child.x, child.y - 25);
+                ctx.stroke();
+              }
+            });
+          }
         }
         return;
       }
