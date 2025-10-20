@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 import { z } from 'zod';
 
 const Auth = () => {
@@ -21,6 +22,7 @@ const Auth = () => {
     password?: string;
     phone?: string;
   }>({});
+  const [loadingContribution, setLoadingContribution] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
   const { signIn, signUp, signInWithGoogle, user } = useAuth();
@@ -41,7 +43,28 @@ const Auth = () => {
     if (user) {
       navigate('/');
     }
-  }, [user, navigate]);
+    
+    // Check for donation status in URL
+    const params = new URLSearchParams(window.location.search);
+    const donationStatus = params.get('donation');
+    
+    if (donationStatus === 'success') {
+      toast({
+        title: "Obrigado pela sua contribuição! 💝",
+        description: "Sua doação ajudará muito no desenvolvimento do projeto.",
+      });
+      // Remove the query parameter from URL
+      window.history.replaceState({}, '', '/auth');
+    } else if (donationStatus === 'canceled') {
+      toast({
+        title: "Doação cancelada",
+        description: "Você pode contribuir quando quiser.",
+        variant: "destructive",
+      });
+      // Remove the query parameter from URL
+      window.history.replaceState({}, '', '/auth');
+    }
+  }, [user, navigate, toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -118,6 +141,28 @@ const Auth = () => {
     setLoading(false);
   };
 
+  const handleContribution = async () => {
+    setLoadingContribution(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('create-donation', {
+        body: { priceId: 'price_1SK9qJBOrcC2OeBVr9qHsUgs' }
+      });
+      
+      if (error) throw error;
+      
+      if (data?.url) {
+        window.open(data.url, '_blank');
+      }
+    } catch (error: any) {
+      toast({
+        title: "Erro ao processar contribuição",
+        description: error.message || "Ocorreu um erro inesperado",
+        variant: "destructive",
+      });
+    }
+    setLoadingContribution(false);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-green-50 flex items-center justify-center py-8 px-4">
       <div className="max-w-6xl w-full mx-auto grid md:grid-cols-2 gap-8 items-center">
@@ -153,7 +198,7 @@ const Auth = () => {
             </p>
           </div>
           
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-2">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-3">
             <div className="flex items-start gap-3">
               <span className="text-2xl">🚀</span>
               <div className="space-y-2">
@@ -163,8 +208,19 @@ const Auth = () => {
                   Você receberá feedbacks semanais sobre novos recursos implementados, 
                   correções realizadas e as próximas funcionalidades planejadas.
                 </p>
+                <p className="text-sm text-blue-800 leading-relaxed font-medium">
+                  Não somos financiados por ninguém. Caso você queira contribuir com qualquer valor, será de grande ajuda.
+                </p>
               </div>
             </div>
+            <Button
+              onClick={handleContribution}
+              disabled={loadingContribution}
+              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
+              size="sm"
+            >
+              {loadingContribution ? 'Processando...' : '💝 Contribuir com o Projeto'}
+            </Button>
           </div>
         </div>
 
