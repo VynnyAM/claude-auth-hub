@@ -152,6 +152,20 @@ const Auth = () => {
               🎁 Teste grátis de 3 dias do Plano Básico ao criar sua conta!
             </p>
           </div>
+          
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-2">
+            <div className="flex items-start gap-3">
+              <span className="text-2xl">🚀</span>
+              <div className="space-y-2">
+                <p className="text-blue-900 font-medium">Sistema em Beta</p>
+                <p className="text-sm text-blue-800 leading-relaxed">
+                  Sua assinatura contribui diretamente para o avanço deste projeto! 
+                  Você receberá feedbacks semanais sobre novos recursos implementados, 
+                  correções realizadas e as próximas funcionalidades planejadas.
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div className="bg-card rounded-2xl shadow-xl p-8">
