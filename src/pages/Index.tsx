@@ -451,16 +451,25 @@ const Index = () => {
         
         // Caso 1: Casal (ambos os pais presentes)
         if (from && to) {
-          // ETAPA 1: Linha horizontal do casamento dos pais
-          // Esta linha conecta os dois pais e é a base da estrutura familiar
+          // Verificar se já existe uma relação de casamento manual entre os pais
+          const hasMarriageRelation = filteredElements.some(e => 
+            e.type === 'relation' && 
+            e.relationType === 'marriage' && 
+            ((e.from === from.id && e.to === to.id) || (e.from === to.id && e.to === from.id))
+          );
+          
           const leftParent = from.x < to.x ? from : to;
           const rightParent = from.x < to.x ? to : from;
           const marriageLineY = (leftParent.y + rightParent.y) / 2;
           
-          ctx.beginPath();
-          ctx.moveTo(leftParent.x, marriageLineY);
-          ctx.lineTo(rightParent.x, marriageLineY);
-          ctx.stroke();
+          // ETAPA 1: Linha horizontal do casamento dos pais
+          // Só desenhar se NÃO existir uma relação de casamento manual
+          if (!hasMarriageRelation) {
+            ctx.beginPath();
+            ctx.moveTo(leftParent.x, marriageLineY);
+            ctx.lineTo(rightParent.x, marriageLineY);
+            ctx.stroke();
+          }
           
           // ETAPA 2: Ponto fixo de conexão no centro da linha do casamento
           const connectionPointX = (leftParent.x + rightParent.x) / 2;
