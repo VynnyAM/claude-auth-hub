@@ -209,7 +209,7 @@ const Auth = () => {
                   correções realizadas e as próximas funcionalidades planejadas.
                 </p>
                 <p className="text-sm text-blue-800 leading-relaxed font-medium">
-                  Não somos financiados por ninguém. Caso você queira contribuir com qualquer valor, será de grande ajuda.
+                  Não somos financiados por ninguém. Caso você queira contribuir com R$ 10, será de grande ajuda.
                 </p>
               </div>
             </div>
