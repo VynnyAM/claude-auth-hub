@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, Download, Trash2, Users, Save, FolderOpen, Plus, Lock, CreditCard, Check, X, BookOpen, Search } from 'lucide-react';
+import { LogOut, Download, Trash2, Users, Save, FolderOpen, Plus, Lock, CreditCard, Check, X, BookOpen, Search, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -56,6 +56,10 @@ const Index = () => {
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [showLoadModal, setShowLoadModal] = useState(false);
   const [showLegendModal, setShowLegendModal] = useState(false);
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [feedbackMessage, setFeedbackMessage] = useState('');
+  const [feedbackEmail, setFeedbackEmail] = useState('');
+  const [sendingFeedback, setSendingFeedback] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [genogramTitle, setGenogramTitle] = useState('Novo Genograma');
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -167,6 +171,47 @@ const Index = () => {
     setIsDragging(false);
     setDragOffset({ x: 0, y: 0 });
     setShowClearModal(false);
+  };
+
+  const handleSendFeedback = async () => {
+    if (!feedbackMessage.trim()) {
+      toast({
+        title: "Mensagem vazia",
+        description: "Por favor, escreva sua mensagem de feedback.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setSendingFeedback(true);
+      
+      const { error } = await supabase.functions.invoke('send-feedback', {
+        body: {
+          message: feedbackMessage,
+          email: feedbackEmail.trim() || undefined,
+        },
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Feedback enviado!",
+        description: "Obrigado pelo seu tempo! Certamente vamos avaliar a possibilidade de implantação.",
+      });
+
+      setFeedbackMessage('');
+      setFeedbackEmail('');
+      setShowFeedbackModal(false);
+    } catch (error: any) {
+      toast({
+        title: "Erro ao enviar feedback",
+        description: error.message || "Não foi possível enviar o feedback. Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setSendingFeedback(false);
+    }
   };
 
   const addElement = (type: string) => {
@@ -1476,6 +1521,15 @@ const Index = () => {
                   {canDownload && <Download className="w-4 h-4 mr-2" />}
                   Baixar Imagem
                 </Button>
+                <Button
+                  onClick={() => setShowFeedbackModal(true)}
+                  className="w-full bg-primary/10 hover:bg-primary/20 border-primary/30 text-primary"
+                  variant="outline"
+                  size="sm"
+                >
+                  <MessageSquare className="w-4 h-4 mr-2" />
+                  Feedback do Sistema
+                </Button>
               </div>
             </div>
           </div>
@@ -1711,6 +1765,60 @@ const Index = () => {
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowPlansModal(false)}>
               Fechar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Feedback Modal */}
+      <Dialog open={showFeedbackModal} onOpenChange={setShowFeedbackModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Feedback do Sistema</DialogTitle>
+            <DialogDescription>
+              Ajude-nos a melhorar! Envie sua sugestão de forma anônima ou com seu e-mail.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div>
+              <Label htmlFor="feedback-email">E-mail (opcional - para resposta)</Label>
+              <Input
+                id="feedback-email"
+                type="email"
+                placeholder="seu@email.com"
+                value={feedbackEmail}
+                onChange={(e) => setFeedbackEmail(e.target.value)}
+                disabled={sendingFeedback}
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="feedback-message">Mensagem *</Label>
+              <textarea
+                id="feedback-message"
+                className="w-full min-h-[150px] px-3 py-2 border border-border rounded-md bg-background text-foreground resize-y"
+                placeholder="Compartilhe sua sugestão, problema ou ideia para melhorar o sistema..."
+                value={feedbackMessage}
+                onChange={(e) => setFeedbackMessage(e.target.value)}
+                disabled={sendingFeedback}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setShowFeedbackModal(false)}
+              disabled={sendingFeedback}
+            >
+              Cancelar
+            </Button>
+            <Button 
+              onClick={handleSendFeedback}
+              disabled={sendingFeedback || !feedbackMessage.trim()}
+            >
+              {sendingFeedback ? "Enviando..." : "Enviar Feedback"}
             </Button>
           </DialogFooter>
         </DialogContent>
