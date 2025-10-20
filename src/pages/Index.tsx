@@ -174,17 +174,32 @@ const Index = () => {
   };
 
   const generateFamilyStructure = () => {
-    // Define as posições base para a estrutura
-    const centerX = 450; // Centro do canvas (900px / 2)
-    const parentY = 150; // Altura dos pais
-    const spacing = 120; // Espaçamento horizontal entre pai e mãe
-    const childrenY = 350; // Altura dos filhos
-    const childSpacing = 100; // Espaçamento entre filhos
+    // ESTRUTURA HIERÁRQUICA AUTOMÁTICA DE GENOGRAMA
+    // Esta função cria uma família seguindo as convenções clássicas:
+    // - Quadrado = homem (pai, filhos)
+    // - Círculo = mulher (mãe, filhas)
+    // - Linha horizontal verde = casamento/união
+    // - Linhas verticais = conexão automática entre gerações
+    // 
+    // IMPORTANTE: As ligações são AUTOMÁTICAS e se adaptam quando os elementos são movidos.
+    // O sistema mantém automaticamente:
+    // 1. Linha horizontal do casamento entre pais
+    // 2. Linha vertical central descendo do casamento
+    // 3. Linha horizontal dos filhos (sempre conectada)
+    // 4. Linhas verticais individuais para cada filho
     
-    // Criar ID base único
+    // Define as posições base para a estrutura hierárquica
+    const centerX = 450; // Centro do canvas (900px / 2)
+    const parentY = 150; // Altura dos pais (geração superior)
+    const spacing = 120; // Espaçamento horizontal entre pai e mãe
+    const childrenY = 310; // Altura dos filhos (geração inferior) - 160px abaixo dos pais para manter 80px de distância da linha de casamento
+    const childSpacing = 100; // Espaçamento proporcional entre irmãos
+    
+    // Criar ID base único para todos os elementos da família
     const baseId = Date.now();
     
-    // Criar o pai (quadrado - male) - à esquerda
+    // GERAÇÃO 1: PAIS
+    // Criar o pai (quadrado - male) - posicionado à esquerda
     const father: GenogramElement = {
       id: baseId + 1,
       type: 'male',
@@ -195,7 +210,7 @@ const Index = () => {
       status: 'alive'
     };
     
-    // Criar a mãe (círculo - female) - à direita
+    // Criar a mãe (círculo - female) - posicionada à direita
     const mother: GenogramElement = {
       id: baseId + 2,
       type: 'female',
@@ -206,7 +221,9 @@ const Index = () => {
       status: 'alive'
     };
     
-    // Criar 3 filhos (2 filhos homens e 1 filha mulher)
+    // GERAÇÃO 2: FILHOS
+    // Criar filhos alinhados horizontalmente e centralizados em relação aos pais
+    // A posição vertical é calculada para manter 80px de distância da linha de casamento
     const child1: GenogramElement = {
       id: baseId + 3,
       type: 'male',
@@ -237,7 +254,8 @@ const Index = () => {
       status: 'alive'
     };
     
-    // Criar relação de casamento entre pai e mãe
+    // RELAÇÕES FAMILIARES
+    // Relação de casamento: linha horizontal verde conectando pai e mãe
     const marriage: GenogramElement = {
       id: baseId + 6,
       type: 'relation',
@@ -248,7 +266,11 @@ const Index = () => {
       y: 0
     };
     
-    // Criar relação de filhos conectando pais aos filhos
+    // Relação de filhos: cria automaticamente a estrutura hierárquica
+    // - Linha vertical do casamento descendo
+    // - Linha horizontal conectando todos os filhos
+    // - Linhas verticais individuais para cada filho
+    // Esta relação mantém AUTOMATICAMENTE todas as conexões mesmo quando elementos são movidos
     const childrenRelation: GenogramElement = {
       id: baseId + 7,
       type: 'relation',
@@ -261,6 +283,7 @@ const Index = () => {
     };
     
     // Adicionar todos os elementos à estrutura
+    // A ordem garante que as relações sejam desenhadas antes dos elementos
     const newElements = [
       father,
       mother,
@@ -276,7 +299,7 @@ const Index = () => {
     
     toast({
       title: "Estrutura familiar gerada!",
-      description: "Uma família básica com pais e 3 filhos foi criada automaticamente.",
+      description: "Família com ligações automáticas criada. As conexões se mantêm mesmo ao mover os elementos.",
     });
   };
 
@@ -613,7 +636,14 @@ const Index = () => {
       const from = filteredElements.find(e => e.id === rel.from);
       const to = filteredElements.find(e => e.id === rel.to);
       
-      // Relação de filhos (padrão hierárquico de genograma)
+      // RELAÇÃO DE FILHOS - ESTRUTURA HIERÁRQUICA AUTOMÁTICA
+      // Este código mantém AUTOMATICAMENTE as ligações familiares sempre atualizadas
+      // Mesmo quando os elementos são movidos, as linhas se recalculam e mantêm a estrutura:
+      // 1. Linha horizontal verde do casamento
+      // 2. Linha vertical central descendo do casamento
+      // 3. Linha horizontal conectando todos os irmãos
+      // 4. Linhas verticais individuais de cada filho
+      // NENHUM FILHO FICA DESCONECTADO - o sistema garante que todos permanecem ligados
       if (rel.relationType === 'children' && rel.children && rel.children.length > 0) {
         ctx.strokeStyle = '#4ade80';
         ctx.lineWidth = 2;
@@ -663,11 +693,14 @@ const Index = () => {
           ctx.stroke();
           
           // ETAPA 5: Linha horizontal dos irmãos (garante conexão com a linha vertical central)
+          // O sistema calcula AUTOMATICAMENTE o espaçamento proporcional entre irmãos
+          // e mantém o alinhamento centralizado em relação aos pais
           const childrenXPositions = children.map(c => c!.x).sort((a, b) => a - b);
           const leftmostChildX = childrenXPositions[0];
           const rightmostChildX = childrenXPositions[childrenXPositions.length - 1];
           
-          // Inclui o ponto de conexão central para evitar desacoplamento (caso de 1 filho ou filhos deslocados)
+          // Inclui o ponto de conexão central para GARANTIR que nenhum filho se desacople
+          // Mesmo se os filhos forem movidos para longe dos pais, a conexão se mantém
           const siblingsStartX = Math.min(leftmostChildX, connectionPointX);
           const siblingsEndX = Math.max(rightmostChildX, connectionPointX);
           
