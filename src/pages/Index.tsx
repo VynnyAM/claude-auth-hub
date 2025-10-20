@@ -260,7 +260,7 @@ const Index = () => {
     
     const clicked = elements.find(el => {
       if (el.type === 'relation') return false;
-      return x >= el.x - 30 && x <= el.x + 30 && y >= el.y - 30 && y <= el.y + 30;
+      return x >= el.x - 40 && x <= el.x + 40 && y >= el.y - 40 && y <= el.y + 40;
     });
     
     if (clicked) {
