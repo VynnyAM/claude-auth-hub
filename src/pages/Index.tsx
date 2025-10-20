@@ -453,20 +453,46 @@ const Index = () => {
     
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-    // Draw subtle grid
-    ctx.strokeStyle = 'rgba(200, 200, 220, 0.2)';
+    // Draw grid with two levels: major (100px) and minor (50px)
+    
+    // Minor grid lines (50px) - mais claras
+    ctx.strokeStyle = 'rgba(200, 200, 220, 0.4)';
     ctx.lineWidth = 1;
     
-    // Vertical lines
+    // Vertical minor lines
     for (let x = 0; x <= canvas.width; x += 50) {
+      if (x % 100 !== 0) { // Skip major grid lines
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, canvas.height);
+        ctx.stroke();
+      }
+    }
+    
+    // Horizontal minor lines
+    for (let y = 0; y <= canvas.height; y += 50) {
+      if (y % 100 !== 0) { // Skip major grid lines
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(canvas.width, y);
+        ctx.stroke();
+      }
+    }
+    
+    // Major grid lines (100px) - mais escuras e grossas
+    ctx.strokeStyle = 'rgba(180, 180, 200, 0.6)';
+    ctx.lineWidth = 1.5;
+    
+    // Vertical major lines
+    for (let x = 0; x <= canvas.width; x += 100) {
       ctx.beginPath();
       ctx.moveTo(x, 0);
       ctx.lineTo(x, canvas.height);
       ctx.stroke();
     }
     
-    // Horizontal lines
-    for (let y = 0; y <= canvas.height; y += 50) {
+    // Horizontal major lines
+    for (let y = 0; y <= canvas.height; y += 100) {
       ctx.beginPath();
       ctx.moveTo(0, y);
       ctx.lineTo(canvas.width, y);
