@@ -1120,7 +1120,22 @@ const Index = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     
-    const url = canvas.toDataURL('image/png');
+    // Criar canvas temporário com fundo branco
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = canvas.width;
+    tempCanvas.height = canvas.height;
+    const tempCtx = tempCanvas.getContext('2d');
+    
+    if (!tempCtx) return;
+    
+    // Preencher com fundo branco
+    tempCtx.fillStyle = '#FFFFFF';
+    tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+    
+    // Desenhar o canvas original por cima
+    tempCtx.drawImage(canvas, 0, 0);
+    
+    const url = tempCanvas.toDataURL('image/png');
     const link = document.createElement('a');
     link.download = 'genograma-familiar.png';
     link.href = url;
