@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { Resend } from "npm:resend@4.0.0";
+import { Resend } from "https://esm.sh/resend@2.0.0";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -40,7 +40,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     const emailResponse = await resend.emails.send({
       from: "Genograma Familiar <onboarding@resend.dev>",
-      to: ["vrollsing@gmail.com"],
+      to: ["vynnyam@gmail.com"],
       subject: "Novo Feedback do Sistema - Genograma Familiar",
       html: `
         <h1>Novo Feedback Recebido</h1>
