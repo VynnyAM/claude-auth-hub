@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, Download, Trash2, Users, Save, FolderOpen, Plus, Lock, CreditCard, Check, X, Network, BookOpen, LayoutTemplate, Search } from 'lucide-react';
+import { LogOut, Download, Trash2, Users, Save, FolderOpen, Plus, Lock, CreditCard, Check, X, Network, BookOpen, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -26,7 +26,6 @@ import { useSubscription } from '@/hooks/useSubscription';
 import { supabase } from '@/integrations/supabase/client';
 import { AIChatbot } from '@/components/AIChatbot';
 import { GenogramLegend } from '@/components/GenogramLegend';
-import { genogramTemplates } from '@/data/genogramTemplates';
 
 const PRICE_IDS = {
   basic: 'price_1SJs8NBOrcC2OeBV6wUbq4o4',
@@ -57,7 +56,6 @@ const Index = () => {
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [showLoadModal, setShowLoadModal] = useState(false);
   const [showLegendModal, setShowLegendModal] = useState(false);
-  const [showTemplatesModal, setShowTemplatesModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [genogramTitle, setGenogramTitle] = useState('Novo Genograma');
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -1375,13 +1373,13 @@ const Index = () => {
                   Carregar
                 </Button>
                 <Button
-                  onClick={() => setShowTemplatesModal(true)}
-                  className="w-full"
+                  onClick={() => setShowClearModal(true)}
+                  className="w-full bg-muted/50 hover:bg-muted border-muted-foreground/30"
                   variant="outline"
                   size="sm"
                 >
-                  <LayoutTemplate className="w-4 h-4 mr-2" />
-                  Templates
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Limpar Tela
                 </Button>
                 <Button
                   onClick={() => setShowLegendModal(true)}
@@ -1671,15 +1669,6 @@ const Index = () => {
                   Organizar Automaticamente
                 </Button>
                 <Button
-                  onClick={() => setShowClearModal(true)}
-                  className="w-full bg-muted/50 hover:bg-muted border-muted-foreground/30"
-                  variant="outline"
-                  size="sm"
-                >
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  Limpar Tela
-                </Button>
-                <Button
                   onClick={exportImage}
                   className="w-full bg-muted/50 hover:bg-muted border-muted-foreground/30"
                   variant="outline"
@@ -1924,58 +1913,6 @@ const Index = () => {
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowPlansModal(false)}>
-              Fechar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Templates Modal */}
-      <Dialog open={showTemplatesModal} onOpenChange={setShowTemplatesModal}>
-        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Selecionar Template</DialogTitle>
-            <DialogDescription>
-              Escolha uma estrutura familiar pré-definida para começar rapidamente
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="grid md:grid-cols-2 gap-4">
-            {genogramTemplates.map((template) => (
-              <div
-                key={template.id}
-                className="bg-card border-2 border-border hover:border-primary rounded-lg p-4 cursor-pointer transition-all"
-                onClick={() => {
-                  if (elements.length > 0) {
-                    if (confirm('Isso irá substituir o genograma atual. Deseja continuar?')) {
-                      setElements(template.elements);
-                      setShowTemplatesModal(false);
-                      toast({
-                        title: "Template aplicado!",
-                        description: `${template.name} foi carregado com sucesso.`,
-                      });
-                    }
-                  } else {
-                    setElements(template.elements);
-                    setShowTemplatesModal(false);
-                    toast({
-                      title: "Template aplicado!",
-                      description: `${template.name} foi carregado com sucesso.`,
-                    });
-                  }
-                }}
-              >
-                <h3 className="font-semibold text-lg mb-2">{template.name}</h3>
-                <p className="text-sm text-muted-foreground mb-3">{template.description}</p>
-                <div className="bg-muted/30 rounded h-32 flex items-center justify-center text-xs text-muted-foreground">
-                  {template.elements.filter(e => e.type !== 'relation').length} pessoas
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowTemplatesModal(false)}>
               Fechar
             </Button>
           </DialogFooter>
