@@ -173,6 +173,113 @@ const Index = () => {
     setShowClearModal(false);
   };
 
+  const generateFamilyStructure = () => {
+    // Define as posições base para a estrutura
+    const centerX = 450; // Centro do canvas (900px / 2)
+    const parentY = 150; // Altura dos pais
+    const spacing = 120; // Espaçamento horizontal entre pai e mãe
+    const childrenY = 350; // Altura dos filhos
+    const childSpacing = 100; // Espaçamento entre filhos
+    
+    // Criar ID base único
+    const baseId = Date.now();
+    
+    // Criar o pai (quadrado - male) - à esquerda
+    const father: GenogramElement = {
+      id: baseId + 1,
+      type: 'male',
+      x: centerX - spacing / 2,
+      y: parentY,
+      name: 'Pai',
+      age: '',
+      status: 'alive'
+    };
+    
+    // Criar a mãe (círculo - female) - à direita
+    const mother: GenogramElement = {
+      id: baseId + 2,
+      type: 'female',
+      x: centerX + spacing / 2,
+      y: parentY,
+      name: 'Mãe',
+      age: '',
+      status: 'alive'
+    };
+    
+    // Criar 3 filhos (2 filhos homens e 1 filha mulher)
+    const child1: GenogramElement = {
+      id: baseId + 3,
+      type: 'male',
+      x: centerX - childSpacing,
+      y: childrenY,
+      name: 'Filho 1',
+      age: '',
+      status: 'alive'
+    };
+    
+    const child2: GenogramElement = {
+      id: baseId + 4,
+      type: 'female',
+      x: centerX,
+      y: childrenY,
+      name: 'Filha',
+      age: '',
+      status: 'alive'
+    };
+    
+    const child3: GenogramElement = {
+      id: baseId + 5,
+      type: 'male',
+      x: centerX + childSpacing,
+      y: childrenY,
+      name: 'Filho 2',
+      age: '',
+      status: 'alive'
+    };
+    
+    // Criar relação de casamento entre pai e mãe
+    const marriage: GenogramElement = {
+      id: baseId + 6,
+      type: 'relation',
+      relationType: 'marriage',
+      from: father.id,
+      to: mother.id,
+      x: 0,
+      y: 0
+    };
+    
+    // Criar relação de filhos conectando pais aos filhos
+    const childrenRelation: GenogramElement = {
+      id: baseId + 7,
+      type: 'relation',
+      relationType: 'children',
+      from: father.id,
+      to: mother.id,
+      x: 0,
+      y: 0,
+      children: [child1.id, child2.id, child3.id]
+    };
+    
+    // Adicionar todos os elementos à estrutura
+    const newElements = [
+      father,
+      mother,
+      child1,
+      child2,
+      child3,
+      marriage,
+      childrenRelation
+    ];
+    
+    setElements(newElements);
+    setSelectedElement(null);
+    
+    toast({
+      title: "Estrutura familiar gerada!",
+      description: "Uma família básica com pais e 3 filhos foi criada automaticamente.",
+    });
+  };
+
   const handleSendFeedback = async () => {
     if (!feedbackMessage.trim()) {
       toast({
@@ -1588,6 +1695,15 @@ const Index = () => {
             <div className="bg-card rounded-xl shadow-md p-4">
               <h3 className="font-medium text-foreground mb-3">Ações</h3>
               <div className="space-y-2">
+                <Button
+                  onClick={generateFamilyStructure}
+                  className="w-full bg-green-600/10 hover:bg-green-600/20 border-green-600/30 text-green-700"
+                  variant="outline"
+                  size="sm"
+                >
+                  <Users className="w-4 h-4 mr-2" />
+                  Gerar Estrutura Familiar
+                </Button>
                 <Button
                   onClick={exportImage}
                   className="w-full bg-muted/50 hover:bg-muted border-muted-foreground/30"
