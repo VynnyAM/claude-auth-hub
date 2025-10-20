@@ -395,8 +395,8 @@ const Index = () => {
       // Relação de filhos (padrão hierárquico de genograma)
       if (rel.relationType === 'children' && rel.children) {
         if (from && to) {
-          // 1. Linha horizontal conectando o casal (pais)
-          const coupleY = Math.max(from.y, to.y) + 25; // Abaixo do casal
+          // 1. Linha horizontal conectando o casal (pais) no centro dos símbolos
+          const coupleY = (from.y + to.y) / 2; // Centro vertical entre os dois símbolos
           
           ctx.strokeStyle = '#4ade80';
           ctx.lineWidth = 2;
@@ -416,7 +416,7 @@ const Index = () => {
           if (children.length > 0) {
             // Calcular a posição Y da linha horizontal dos filhos (um pouco acima do filho mais alto)
             const minChildY = Math.min(...children.map(c => c!.y));
-            const childrenLineY = minChildY - 35;
+            const childrenLineY = minChildY - 40; // Aumentado para dar mais espaço
             
             // 2. Linha vertical descendo do casal até a linha dos filhos
             ctx.beginPath();
