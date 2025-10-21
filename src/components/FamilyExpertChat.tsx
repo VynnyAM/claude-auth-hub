@@ -305,7 +305,7 @@ export const FamilyExpertChat = ({ onGenerateGenogram, isButton = false }: Famil
         variant={isButton ? "default" : "default"}
       >
         <MessageCircle className="w-5 h-5 mr-2" />
-        Abrir Chat do Especialista
+        Descreva sua família
       </Button>
     );
   }
