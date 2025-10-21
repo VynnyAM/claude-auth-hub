@@ -28,8 +28,8 @@ import { FamilyExpertChat } from '@/components/FamilyExpertChat';
 import { GenogramLegend } from '@/components/GenogramLegend';
 
 const PRICE_IDS = {
-  basic: 'price_1SJs8NBOrcC2OeBV6wUbq4o4',
-  standard: 'price_1SJs8oBOrcC2OeBV1YD4gVv8',
+  monthly: 'price_1SKk0fBOrcC2OeBVSHvZPa7i',
+  annual: 'price_1SKk0xBOrcC2OeBVV8jT9LPk',
 };
 
 const Index = () => {
@@ -104,7 +104,7 @@ const Index = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [selectedElement, elements]);
 
-  const handleSubscribe = async (plan: 'basic' | 'standard') => {
+  const handleSubscribe = async (plan: 'monthly' | 'annual') => {
     try {
       setSubscribing(true);
       const priceId = PRICE_IDS[plan];
@@ -1922,7 +1922,7 @@ const Index = () => {
             <DialogTitle className="text-2xl">Gerenciar Assinatura</DialogTitle>
             <DialogDescription>
               {subscription?.status === 'active' 
-                ? `Você está no plano ${subscription.plan === 'basic' ? 'Básico' : 'Profissional'}` 
+                ? 'Você possui uma assinatura ativa' 
                 : 'Escolha um plano para desbloquear todos os recursos'}
             </DialogDescription>
           </DialogHeader>
@@ -1941,70 +1941,12 @@ const Index = () => {
           )}
 
           <div className="grid md:grid-cols-2 gap-4">
-            {/* Plano Básico */}
-            <div className={`bg-card rounded-xl shadow-lg p-6 border-2 transition-all ${
-              subscription?.plan === 'basic' 
-                ? 'border-primary bg-primary/5' 
-                : 'border-border hover:border-primary/50'
-            }`}>
-              {subscription?.plan === 'basic' && (
-                <div className="mb-2">
-                  <span className="bg-primary text-primary-foreground px-3 py-1 rounded-full text-xs font-semibold">
-                    SEU PLANO ATUAL
-                  </span>
-                </div>
-              )}
+            {/* Plano Mensal */}
+            <div className="bg-card rounded-xl shadow-lg p-6 border-2 border-border hover:border-primary/50 transition-all">
               <div className="mb-4">
-                <h3 className="text-2xl font-semibold text-foreground mb-2">Básico</h3>
+                <h3 className="text-2xl font-semibold text-foreground mb-2">Plano Mensal</h3>
                 <div className="flex items-baseline gap-1">
-                  <span className="text-4xl font-bold text-primary">R$ 40</span>
-                  <span className="text-muted-foreground">/mês</span>
-                </div>
-              </div>
-              <ul className="space-y-3 mb-6">
-                <li className="flex items-start gap-2">
-                  <Check className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
-                  <span className="text-sm">Criar apenas 1 genograma</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <X className="w-5 h-5 text-muted-foreground flex-shrink-0 mt-0.5" />
-                  <span className="text-sm text-muted-foreground">Salvar e carregar genogramas</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <Check className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
-                  <span className="text-sm">Baixar imagens</span>
-                </li>
-              </ul>
-              {subscription?.plan !== 'basic' && (
-                <Button
-                  onClick={() => handleSubscribe('basic')}
-                  disabled={subscribing}
-                  className="w-full"
-                  variant="outline"
-                >
-                  <CreditCard className="w-4 h-4 mr-2" />
-                  Assinar Plano Básico
-                </Button>
-              )}
-            </div>
-
-            {/* Plano Profissional */}
-            <div className={`bg-card rounded-xl shadow-lg p-6 border-2 transition-all ${
-              subscription?.plan === 'standard' 
-                ? 'border-primary bg-primary/5' 
-                : 'border-border hover:border-primary/50'
-            }`}>
-              {subscription?.plan === 'standard' && (
-                <div className="mb-2">
-                  <span className="bg-primary text-primary-foreground px-3 py-1 rounded-full text-xs font-semibold">
-                    SEU PLANO ATUAL
-                  </span>
-                </div>
-              )}
-              <div className="mb-4">
-                <h3 className="text-2xl font-semibold text-foreground mb-2">Profissional</h3>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-4xl font-bold text-primary">R$ 50</span>
+                  <span className="text-4xl font-bold text-primary">R$ 80</span>
                   <span className="text-muted-foreground">/mês</span>
                 </div>
               </div>
@@ -2019,19 +1961,56 @@ const Index = () => {
                 </li>
                 <li className="flex items-start gap-2">
                   <Check className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
-                  <span className="text-sm font-medium">Baixar imagens em alta qualidade</span>
+                  <span className="text-sm font-medium">Baixar PDF em alta qualidade</span>
                 </li>
               </ul>
-              {subscription?.plan !== 'standard' && (
-                <Button
-                  onClick={() => handleSubscribe('standard')}
-                  disabled={subscribing}
-                  className="w-full"
-                >
-                  <CreditCard className="w-4 h-4 mr-2" />
-                  {subscription?.plan === 'basic' ? 'Fazer Upgrade' : 'Assinar Plano Profissional'}
-                </Button>
-              )}
+              <Button
+                onClick={() => handleSubscribe('monthly')}
+                disabled={subscribing}
+                className="w-full"
+              >
+                <CreditCard className="w-4 h-4 mr-2" />
+                Assinar Plano Mensal
+              </Button>
+            </div>
+
+            {/* Plano Anual */}
+            <div className="bg-card rounded-xl shadow-lg p-6 border-2 border-primary bg-primary/5 transition-all relative">
+              <div className="absolute -top-3 right-4">
+                <span className="bg-primary text-primary-foreground px-3 py-1 rounded-full text-xs font-semibold">
+                  20% DE DESCONTO
+                </span>
+              </div>
+              <div className="mb-4">
+                <h3 className="text-2xl font-semibold text-foreground mb-2">Plano Anual</h3>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-4xl font-bold text-primary">R$ 768</span>
+                  <span className="text-muted-foreground">/ano</span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">Economize R$ 192 por ano</p>
+              </div>
+              <ul className="space-y-3 mb-6">
+                <li className="flex items-start gap-2">
+                  <Check className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+                  <span className="text-sm font-medium">Criar genogramas ilimitados</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+                  <span className="text-sm font-medium">Salvar e carregar genogramas</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+                  <span className="text-sm font-medium">Baixar PDF em alta qualidade</span>
+                </li>
+              </ul>
+              <Button
+                onClick={() => handleSubscribe('annual')}
+                disabled={subscribing}
+                className="w-full"
+              >
+                <CreditCard className="w-4 h-4 mr-2" />
+                Assinar Plano Anual
+              </Button>
             </div>
           </div>
 
