@@ -23,29 +23,37 @@ serve(async (req) => {
 
     // Se extractFamily for true, usar modo de extração de dados
     if (extractFamily) {
-      const extractionPrompt = `Você é um assistente especialista em genogramas familiares.
-Seu papel é interpretar o texto enviado pelo usuário e gerar automaticamente a estrutura do genograma, identificando pessoas, relações familiares e o tipo de vínculo entre elas.
+      const extractionPrompt = `Você é um assistente especialista em genogramas.
+Sempre gere uma estrutura de saída em JSON com pessoas e relações. Para cada relação entre duas pessoas, inclua o campo "type" com um dos valores apropriados.
 
-REGRAS PARA IDENTIFICAR RELAÇÕES:
+REGRAS OBRIGATÓRIAS (PRIORIDADE):
 
-1. Se o texto mencionar "casados", "marido e mulher", "casal", "juntos", "cônjuges", "pais" → use "marriage" (casamento/união).
+1. Se o texto do usuário contiver qualquer palavra-chave de separação (separad, separados, separou, divorciad, divórcio, ex-marido, ex-esposa, ex-companheiro, sem convivência, não mora junto), DEFINA o tipo da relação como "separation" (separados) ou "divorce" (divorciados) conforme a palavra.
 
-2. Se mencionar "separados", "divorciados", "ex-marido", "ex-esposa", "ex-cônjuge" → use "separation" (separação/relação encerrada).
+2. Se o texto contiver palavras de casamento (casados, casamento, marido, esposa, juntos, moram juntos, pais) MAS TAMBÉM contiver palavras de separação (ver regra 1), use a regra 1 (separados/divorciados tem prioridade).
 
-3. Se o texto mencionar "namorados", "união estável", "moram juntos", "companheiros" → use "living-together" (união não formalizada).
+3. Se o texto mencionar "namorados", "namoro" → use "living-together".
+   Se mencionar "união estável", "moram juntos" sem indicação de casamento formal → use "living-together".
 
-4. Se o texto disser apenas "pai" e "mãe" sem contexto adicional → assuma "marriage" SOMENTE se não houver menção explícita de separação ou divórcio.
+4. Se o texto mencionar explicitamente "casados", "casamento", "marido e mulher" sem palavras de separação → use "marriage".
 
-5. Quando gerar o genograma, garanta que pais separados NÃO apareçam como casados. A relação entre eles deve usar o tipo "separation", mesmo que tenham filhos em comum.
+5. Se mencionar apenas "pais", "pai e mãe" sem contexto de estado conjugal E sem palavras de separação → assuma "marriage".
+
+6. Se não houver indicação clara de estado conjugal, NÃO assuma nada - deixe apenas a relação de parentesco (ex: apenas marcar que são pais dos filhos).
 
 OUTRAS INSTRUÇÕES:
 - Se o usuário não informar nome, deixe vazio
 - Se não informar idade, deixe vazio
 - Identifique o gênero pelo papel (pai=male, mãe=female, filho/irmão=male, filha/irmã=female)
 - Identifique outras relações mencionadas (distante, próximo, conflito, falecido, etc.)
-- Irmãos podem ser chamados de filho/filha também
+- Para relações entre pais e filhos, SEMPRE identifique a relação conjugal dos pais SEPARADAMENTE da relação de parentesco
 
-OBJETIVO: Representar com precisão o tipo de relação familiar e emocional entre as pessoas, não apenas o parentesco biológico.
+IMPORTANTE: NÃO desenhe o genograma diretamente — retorne SEMPRE os dados estruturados. O front-end é responsável por traduzir o tipo em símbolos visuais.
+
+EXEMPLOS:
+- Entrada: "Sou filho de José e Maria, que são separados." → relação José–Maria type: "separation"
+- Entrada: "Meus pais são casados e têm 2 filhos." → relação pais type: "marriage"
+- Entrada: "Meu pai João e minha mãe Ana estão divorciados." → relação João–Ana type: "divorce"
 
 Retorne os dados estruturados usando a ferramenta extract_family_data.`;
 
@@ -60,7 +68,7 @@ Retorne os dados estruturados usando a ferramenta extract_family_data.`;
             type: "function",
             function: {
               name: "extract_family_data",
-              description: "Extrai dados estruturados sobre membros da família e relações",
+              description: "Extrai dados estruturados sobre membros da família e relações com IDs únicos",
               parameters: {
                 type: "object",
                 properties: {
@@ -69,6 +77,7 @@ Retorne os dados estruturados usando a ferramenta extract_family_data.`;
                     items: {
                       type: "object",
                       properties: {
+                        id: { type: "string", description: "ID único da pessoa (ex: p1, p2, p3)" },
                         name: { type: "string", description: "Nome da pessoa (opcional)" },
                         age: { type: "string", description: "Idade (opcional)" },
                         gender: { 
@@ -86,7 +95,7 @@ Retorne os dados estruturados usando a ferramenta extract_family_data.`;
                           description: "Status da pessoa (opcional)"
                         }
                       },
-                      required: ["gender", "role"]
+                      required: ["id", "gender", "role"]
                     }
                   },
                   relations: {
@@ -94,17 +103,19 @@ Retorne os dados estruturados usando a ferramenta extract_family_data.`;
                     items: {
                       type: "object",
                       properties: {
+                        id: { type: "string", description: "ID único da relação (ex: r1, r2, r3)" },
                         type: { 
                           type: "string",
-                          description: "Tipo de relação (casamento, separação, divórcio, distante, próximo, conflito, etc.)"
+                          enum: ["marriage", "divorce", "separation", "living-together", "distant", "conflict", "breakup", "very-close", "fused-conflictual", "alliance", "harmonic", "vulnerable", "physical-abuse", "emotional-abuse", "caregiver", "hostility", "manipulation", "children"],
+                          description: "Tipo de relação - PRIORIDADE: se houver palavras de separação/divórcio, use separation ou divorce mesmo que haja palavras de casamento"
                         },
                         members: {
                           type: "array",
                           items: { type: "string" },
-                          description: "Papéis dos membros envolvidos"
+                          description: "IDs dos membros envolvidos na relação (ex: ['p1', 'p2'])"
                         }
                       },
-                      required: ["type", "members"]
+                      required: ["id", "type", "members"]
                     }
                   }
                 },
