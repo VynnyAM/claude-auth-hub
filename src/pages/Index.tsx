@@ -1537,7 +1537,6 @@ const Index = () => {
 
             <div className="bg-card rounded-xl shadow-md p-4">
               <h3 className="font-medium text-foreground mb-3">Relações</h3>
-              <p className="text-xs text-muted-foreground mb-2">Arraste para selecionar ou Ctrl + clique</p>
               <div className="space-y-2 max-h-96 overflow-y-auto">
                 <Button
                   onClick={() => addRelation('children')}
