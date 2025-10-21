@@ -28,7 +28,7 @@ Seu papel é interpretar o texto enviado pelo usuário e gerar automaticamente a
 
 REGRAS PARA IDENTIFICAR RELAÇÕES:
 
-1. Se o texto mencionar "casados", "marido e mulher", "casal", "juntos", "cônjuges" → use "marriage" (casamento/união).
+1. Se o texto mencionar "casados", "marido e mulher", "casal", "juntos", "cônjuges", "pais" → use "marriage" (casamento/união).
 
 2. Se mencionar "separados", "divorciados", "ex-marido", "ex-esposa", "ex-cônjuge" → use "separation" (separação/relação encerrada).
 
