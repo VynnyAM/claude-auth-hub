@@ -23,16 +23,29 @@ serve(async (req) => {
 
     // Se extractFamily for true, usar modo de extração de dados
     if (extractFamily) {
-      const extractionPrompt = `Você é um especialista em análise de descrições familiares.
-      
-Extraia informações sobre membros da família e suas relações a partir da descrição do usuário.
+      const extractionPrompt = `Você é um assistente especialista em genogramas familiares.
+Seu papel é interpretar o texto enviado pelo usuário e gerar automaticamente a estrutura do genograma, identificando pessoas, relações familiares e o tipo de vínculo entre elas.
 
-IMPORTANTE: 
+REGRAS PARA IDENTIFICAR RELAÇÕES:
+
+1. Se o texto mencionar "casados", "marido e mulher", "casal", "juntos", "cônjuges" → use "marriage" (casamento/união).
+
+2. Se mencionar "separados", "divorciados", "ex-marido", "ex-esposa", "ex-cônjuge" → use "separation" (separação/relação encerrada).
+
+3. Se o texto mencionar "namorados", "união estável", "moram juntos", "companheiros" → use "living-together" (união não formalizada).
+
+4. Se o texto disser apenas "pai" e "mãe" sem contexto adicional → assuma "marriage" SOMENTE se não houver menção explícita de separação ou divórcio.
+
+5. Quando gerar o genograma, garanta que pais separados NÃO apareçam como casados. A relação entre eles deve usar o tipo "separation", mesmo que tenham filhos em comum.
+
+OUTRAS INSTRUÇÕES:
 - Se o usuário não informar nome, deixe vazio
 - Se não informar idade, deixe vazio
-- Identifique o gênero pelo papel (pai=male, mãe=female)
-- Identifique relações mencionadas (separação, divórcio, distante, próximo, falecido, etc.)
+- Identifique o gênero pelo papel (pai=male, mãe=female, filho/irmão=male, filha/irmã=female)
+- Identifique outras relações mencionadas (distante, próximo, conflito, falecido, etc.)
 - Irmãos podem ser chamados de filho/filha também
+
+OBJETIVO: Representar com precisão o tipo de relação familiar e emocional entre as pessoas, não apenas o parentesco biológico.
 
 Retorne os dados estruturados usando a ferramenta extract_family_data.`;
 
