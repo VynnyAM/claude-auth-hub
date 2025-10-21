@@ -1302,11 +1302,11 @@ const Index = () => {
     }
   }, [elements, selectedElement, isSelecting, selectionStart, selectionEnd, filteredElements, searchTerm]);
 
-  const exportImage = () => {
+  const exportToPDF = () => {
     if (!canDownload) {
       toast({
         title: "Recurso bloqueado",
-        description: "Faça upgrade para o plano Profissional para baixar imagens.",
+        description: "Faça upgrade para o plano Profissional para baixar PDF.",
         variant: "destructive",
       });
       return;
@@ -1330,11 +1330,25 @@ const Index = () => {
     // Desenhar o canvas original por cima
     tempCtx.drawImage(canvas, 0, 0);
     
-    const url = tempCanvas.toDataURL('image/png');
-    const link = document.createElement('a');
-    link.download = 'genograma-familiar.png';
-    link.href = url;
-    link.click();
+    // Converter para PDF
+    const imgData = tempCanvas.toDataURL('image/png');
+    
+    // Importar jsPDF dinamicamente
+    import('jspdf').then(({ jsPDF }) => {
+      const pdf = new jsPDF({
+        orientation: 'landscape',
+        unit: 'px',
+        format: [tempCanvas.width, tempCanvas.height]
+      });
+      
+      pdf.addImage(imgData, 'PNG', 0, 0, tempCanvas.width, tempCanvas.height);
+      pdf.save('genograma-familiar.pdf');
+      
+      toast({
+        title: "PDF baixado!",
+        description: "O genograma foi baixado com sucesso.",
+      });
+    });
   };
 
 
@@ -1770,7 +1784,7 @@ const Index = () => {
                   Gerar Estrutura Familiar
                 </Button>
                 <Button
-                  onClick={exportImage}
+                  onClick={exportToPDF}
                   className="w-full bg-muted/50 hover:bg-muted border-muted-foreground/30"
                   variant="outline"
                   size="sm"
@@ -1778,7 +1792,7 @@ const Index = () => {
                 >
                   {!canDownload && <Lock className="w-4 h-4 mr-2" />}
                   {canDownload && <Download className="w-4 h-4 mr-2" />}
-                  Baixar Imagem
+                  Baixar PDF
                 </Button>
                 <Button
                   onClick={() => setShowFeedbackModal(true)}
