@@ -24,7 +24,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { useGenogram, GenogramElement } from '@/hooks/useGenogram';
 import { useSubscription } from '@/hooks/useSubscription';
 import { supabase } from '@/integrations/supabase/client';
-import { AIChatbot } from '@/components/AIChatbot';
 import { FamilyExpertChat } from '@/components/FamilyExpertChat';
 import { GenogramLegend } from '@/components/GenogramLegend';
 
@@ -1405,7 +1404,7 @@ const Index = () => {
         <div className="flex gap-4">
           <div className="w-64 space-y-4 flex-shrink-0">
             {/* Search Box */}
-            <div className="bg-card rounded-xl shadow-md p-4">
+            <div className="bg-card rounded-xl shadow-md p-4 space-y-3">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
@@ -1424,6 +1423,13 @@ const Index = () => {
                   </button>
                 )}
               </div>
+              <FamilyExpertChat 
+                onGenerateGenogram={(newElements) => {
+                  setElements(newElements);
+                  setSelectedElement(null);
+                }} 
+                isButton={true} 
+              />
             </div>
 
             <div className="bg-card rounded-xl shadow-md p-4">
@@ -2079,13 +2085,6 @@ const Index = () => {
 
       {/* Legend Modal */}
       <GenogramLegend open={showLegendModal} onOpenChange={setShowLegendModal} />
-      
-      {/* AI Chatbots */}
-      <AIChatbot />
-      <FamilyExpertChat onGenerateGenogram={(newElements) => {
-        setElements(newElements);
-        setSelectedElement(null);
-      }} />
     </div>
   );
 };

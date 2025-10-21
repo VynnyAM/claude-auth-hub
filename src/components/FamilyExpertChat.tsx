@@ -27,9 +27,10 @@ interface FamilyData {
 
 interface FamilyExpertChatProps {
   onGenerateGenogram: (elements: GenogramElement[]) => void;
+  isButton?: boolean;
 }
 
-export const FamilyExpertChat = ({ onGenerateGenogram }: FamilyExpertChatProps) => {
+export const FamilyExpertChat = ({ onGenerateGenogram, isButton = false }: FamilyExpertChatProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -300,7 +301,8 @@ export const FamilyExpertChat = ({ onGenerateGenogram }: FamilyExpertChatProps) 
     return (
       <Button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 left-6 shadow-lg bg-green-600 hover:bg-green-700"
+        className={isButton ? "w-full" : "fixed bottom-6 left-6 shadow-lg"}
+        variant={isButton ? "default" : "default"}
       >
         <MessageCircle className="w-5 h-5 mr-2" />
         Abrir Chat do Especialista
