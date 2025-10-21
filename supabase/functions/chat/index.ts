@@ -11,8 +11,9 @@ serve(async (req) => {
   }
 
   try {
-    const { messages } = await req.json();
+    const { messages, extractFamily } = await req.json();
     console.log('Received chat request with messages:', messages);
+    console.log('Extract family mode:', extractFamily);
     
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
@@ -20,6 +21,142 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
+    // Se extractFamily for true, usar modo de extração de dados
+    if (extractFamily) {
+      const extractionPrompt = `Você é um especialista em análise de descrições familiares.
+      
+Extraia informações sobre membros da família e suas relações a partir da descrição do usuário.
+
+IMPORTANTE: 
+- Se o usuário não informar nome, deixe vazio
+- Se não informar idade, deixe vazio
+- Identifique o gênero pelo papel (pai=male, mãe=female)
+- Identifique relações mencionadas (separação, divórcio, distante, próximo, falecido, etc.)
+- Irmãos podem ser chamados de filho/filha também
+
+Retorne os dados estruturados usando a ferramenta extract_family_data.`;
+
+      const requestBody: any = {
+        model: "google/gemini-2.5-flash",
+        messages: [
+          { role: "system", content: extractionPrompt },
+          ...messages,
+        ],
+        tools: [
+          {
+            type: "function",
+            function: {
+              name: "extract_family_data",
+              description: "Extrai dados estruturados sobre membros da família e relações",
+              parameters: {
+                type: "object",
+                properties: {
+                  members: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        name: { type: "string", description: "Nome da pessoa (opcional)" },
+                        age: { type: "string", description: "Idade (opcional)" },
+                        gender: { 
+                          type: "string", 
+                          enum: ["male", "female", "undefined"],
+                          description: "Gênero da pessoa"
+                        },
+                        role: { 
+                          type: "string",
+                          description: "Papel familiar (pai, mãe, filho, filha, irmão, irmã)"
+                        },
+                        status: {
+                          type: "string",
+                          enum: ["alive", "deceased", "adopted", "stillborn", "miscarriage", "abortion", "substance-abuse"],
+                          description: "Status da pessoa (opcional)"
+                        }
+                      },
+                      required: ["gender", "role"]
+                    }
+                  },
+                  relations: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        type: { 
+                          type: "string",
+                          description: "Tipo de relação (casamento, separação, divórcio, distante, próximo, conflito, etc.)"
+                        },
+                        members: {
+                          type: "array",
+                          items: { type: "string" },
+                          description: "Papéis dos membros envolvidos"
+                        }
+                      },
+                      required: ["type", "members"]
+                    }
+                  }
+                },
+                required: ["members", "relations"]
+              }
+            }
+          }
+        ],
+        tool_choice: { type: "function", function: { name: "extract_family_data" } }
+      };
+
+      const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('AI gateway error:', response.status, errorText);
+        
+        if (response.status === 429) {
+          return new Response(JSON.stringify({ error: "Limite de requisições excedido. Tente novamente mais tarde." }), {
+            status: 429,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        if (response.status === 402) {
+          return new Response(JSON.stringify({ error: "Créditos insuficientes. Por favor, adicione créditos ao seu workspace." }), {
+            status: 402,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        
+        return new Response(JSON.stringify({ error: "Erro ao chamar IA" }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const data = await response.json();
+      console.log('AI response:', JSON.stringify(data, null, 2));
+      
+      // Extrair dados da família do tool call
+      const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
+      let familyData = null;
+      
+      if (toolCall?.function?.arguments) {
+        try {
+          familyData = JSON.parse(toolCall.function.arguments);
+          console.log('Extracted family data:', familyData);
+        } catch (e) {
+          console.error('Error parsing family data:', e);
+        }
+      }
+
+      return new Response(JSON.stringify({ familyData }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Modo normal de chat (código original)
     const systemPrompt = `Você é um especialista em genogramas psicológicos e desenvolvimento de software.
 
 CONHECIMENTO SOBRE GENOGRAMAS PSICOLÓGICOS:

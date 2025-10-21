@@ -25,6 +25,7 @@ import { useGenogram, GenogramElement } from '@/hooks/useGenogram';
 import { useSubscription } from '@/hooks/useSubscription';
 import { supabase } from '@/integrations/supabase/client';
 import { AIChatbot } from '@/components/AIChatbot';
+import { FamilyExpertChat } from '@/components/FamilyExpertChat';
 import { GenogramLegend } from '@/components/GenogramLegend';
 
 const PRICE_IDS = {
@@ -2078,6 +2079,13 @@ const Index = () => {
 
       {/* Legend Modal */}
       <GenogramLegend open={showLegendModal} onOpenChange={setShowLegendModal} />
+      
+      {/* AI Chatbots */}
+      <AIChatbot />
+      <FamilyExpertChat onGenerateGenogram={(newElements) => {
+        setElements(newElements);
+        setSelectedElement(null);
+      }} />
     </div>
   );
 };
