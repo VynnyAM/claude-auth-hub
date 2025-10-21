@@ -70,6 +70,8 @@ const Index = () => {
   const [selectionEnd, setSelectionEnd] = useState({ x: 0, y: 0 });
   const [draggingMultiple, setDraggingMultiple] = useState(false);
   const [draggedElements, setDraggedElements] = useState<{ id: number; offsetX: number; offsetY: number }[]>([]);
+  const [clickedElement, setClickedElement] = useState<number | null>(null);
+  const [hasMoved, setHasMoved] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -481,14 +483,27 @@ const Index = () => {
       return x >= el.x - 40 && x <= el.x + 40 && y >= el.y - 40 && y <= el.y + 40;
     });
     
+    setHasMoved(false);
+    
     if (clicked) {
-      if (e.ctrlKey || e.metaKey) {
-        toggleSelection(clicked.id);
+      const selectedElements = elements.filter(el => el.selected && el.type !== 'relation');
+      
+      if (!clicked.selected) {
+        // Se não está selecionado, seleciona imediatamente e prepara para arrastar
+        setElements(elements.map(el => 
+          el.id === clicked.id ? { ...el, selected: true } : el
+        ));
+        setIsDragging(true);
+        setDragOffset({ x: x - clicked.x, y: y - clicked.y });
+        setSelectedElement(clicked.id);
+        setClickedElement(null); // Não fazer toggle no mouseUp
       } else {
-        const selectedElements = elements.filter(el => el.selected && el.type !== 'relation');
+        // Se já está selecionado, salvar para fazer toggle no mouseUp se não arrastar
+        setClickedElement(clicked.id);
         
-        // Se clicou em um elemento selecionado e há múltiplos selecionados, arrastar todos
-        if (clicked.selected && selectedElements.length > 1) {
+        // Preparar arrasto
+        if (selectedElements.length > 1) {
+          // Se há múltiplos selecionados, preparar para arrastar todos
           setDraggingMultiple(true);
           setDraggedElements(
             selectedElements.map(el => ({
@@ -498,21 +513,22 @@ const Index = () => {
             }))
           );
         } else {
-          // Arrastar apenas o elemento clicado
+          // Se é o único selecionado, preparar para arrastar apenas ele
           setIsDragging(true);
           setDragOffset({ x: x - clicked.x, y: y - clicked.y });
           setSelectedElement(clicked.id);
-          // Desselecionar outros
-          setElements(elements.map(el => ({ ...el, selected: el.id === clicked.id })));
         }
       }
     } else {
+      // Clicou em espaço vazio: desselecionar tudo
+      setSelectedElement(null);
+      setClickedElement(null);
+      setElements(elements.map(el => ({ ...el, selected: false })));
+      
       // Iniciar seleção por arrastar
       setIsSelecting(true);
       setSelectionStart({ x, y });
       setSelectionEnd({ x, y });
-      setSelectedElement(null);
-      setElements(elements.map(el => ({ ...el, selected: false })));
     }
   };
 
@@ -524,8 +540,10 @@ const Index = () => {
     const y = e.clientY - rect.top;
     
     if (isDragging && selectedElement) {
+      setHasMoved(true);
       updateElement(selectedElement, { x: x - dragOffset.x, y: y - dragOffset.y });
     } else if (draggingMultiple) {
+      setHasMoved(true);
       // Arrastar todos os elementos selecionados mantendo posições relativas
       const updatedElements = elements.map(el => {
         const draggedEl = draggedElements.find(d => d.id === el.id);
@@ -541,6 +559,11 @@ const Index = () => {
   };
 
   const handleMouseUp = () => {
+    // Se clicou em um elemento e não arrastou, fazer toggle
+    if (clickedElement !== null && !hasMoved) {
+      toggleSelection(clickedElement);
+    }
+    
     if (isSelecting) {
       // Selecionar todos os elementos dentro do retângulo
       const minX = Math.min(selectionStart.x, selectionEnd.x);
@@ -556,9 +579,12 @@ const Index = () => {
       
       setIsSelecting(false);
     }
+    
     setIsDragging(false);
     setDraggingMultiple(false);
     setDraggedElements([]);
+    setClickedElement(null);
+    setHasMoved(false);
   };
 
   // Filter elements based on search
