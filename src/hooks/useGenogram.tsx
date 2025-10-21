@@ -4,18 +4,21 @@ import { useToast } from '@/hooks/use-toast';
 
 export interface GenogramElement {
   id: number;
-  type: string;
+  type: string; // 'male', 'female', 'pregnancy', 'undefined', 'twins', 'fraternal-twins', 'identical-twins', 'pet', 'relation'
   x: number;
   y: number;
   name?: string;
   age?: string;
-  status?: string;
+  birthDate?: string; // Data de nascimento
+  deathDate?: string; // Data da morte
+  status?: string; // 'alive', 'deceased', 'substance-abuse', 'recovering', 'mental-disorder', 'adopted', 'foster', 'miscarriage', 'abortion', 'stillborn', 'index-person'
   selected?: boolean;
   highlighted?: boolean;
-  relationType?: string;
+  relationType?: string; // 'marriage', 'divorce', 'separation', 'living-together', 'back-together', 'children', 'siblings', etc.
   from?: number;
   to?: number;
   children?: number[];
+  twinType?: 'fraternal' | 'identical'; // Tipo de gêmeos
 }
 
 export const useGenogram = (userId: string | undefined) => {

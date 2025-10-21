@@ -103,8 +103,13 @@ Retorne os dados estruturados usando a ferramenta extract_family_data.`;
                         },
                         status: {
                           type: "string",
-                          enum: ["alive", "deceased", "adopted", "stillborn", "miscarriage", "abortion", "substance-abuse"],
+                          enum: ["alive", "deceased", "index-person", "adopted", "foster", "stillborn", "miscarriage", "abortion", "substance-abuse", "recovering", "mental-disorder"],
                           description: "Status da pessoa (opcional)"
+                        },
+                        personType: {
+                          type: "string",
+                          enum: ["male", "female", "undefined", "pregnancy", "twins", "fraternal-twins", "identical-twins"],
+                          description: "Tipo de pessoa - use 'twins' ou 'fraternal-twins' para gêmeos fraternos, 'identical-twins' para gêmeos idênticos"
                         }
                       },
                       required: ["id", "gender", "role"]
@@ -118,8 +123,8 @@ Retorne os dados estruturados usando a ferramenta extract_family_data.`;
                         id: { type: "string", description: "ID único da relação (ex: r1, r2, r3)" },
                         type: { 
                           type: "string",
-                          enum: ["marriage", "divorce", "separation", "living-together", "breakup", "distant", "conflict", "very-close", "fused-conflictual", "alliance", "harmonic", "vulnerable", "physical-abuse", "emotional-abuse", "caregiver", "hostility", "manipulation", "children", "unknown"],
-                          description: "Tipo de relação - PRIORIDADE ABSOLUTA: palavras de separação/divórcio prevalecem sobre casamento. Use 'unknown' quando não houver informação clara sobre o tipo de relação conjugal."
+                          enum: ["marriage", "divorce", "separation", "back-together", "living-together", "breakup", "distant", "conflict", "very-close", "fused-conflictual", "alliance", "harmonic", "vulnerable", "physical-abuse", "emotional-abuse", "caregiver", "hostility", "manipulation", "children", "siblings", "unknown"],
+                          description: "Tipo de relação - PRIORIDADE ABSOLUTA: palavras de separação/divórcio prevalecem sobre casamento. Use 'back-together' para casais que voltaram juntos após separação. Use 'unknown' quando não houver informação clara sobre o tipo de relação conjugal."
                         },
                         members: {
                           type: "array",
@@ -243,23 +248,29 @@ PESSOAS (em src/pages/Index.tsx, função addElement):
 - 'female': Feminino (círculo rosa)
 - 'pregnancy': Gravidez (triângulo amarelo)
 - 'undefined': Sexo Indefinido (triângulo invertido cinza)
-- 'twins': Gêmeos (dois círculos conectados ciano)
+- 'twins' ou 'fraternal-twins': Gêmeos Fraternos (dois círculos conectados na base ciano)
+- 'identical-twins': Gêmeos Idênticos (dois círculos conectados com triângulo ciano)
 - 'pet': Animal de Estimação (pentágono verde)
 
 STATUS (propriedade status do elemento):
 - 'alive': Vivo (padrão)
 - 'deceased': Falecido (X vermelho)
-- 'substance-abuse': Abuso de Substâncias (linha preta embaixo)
-- 'adopted': Adotado (linha pontilhada roxa)
+- 'index-person': Pessoa Índice / PI (borda preta destacada)
+- 'substance-abuse': Abuso de Álcool/Drogas (símbolo totalmente preenchido preto)
+- 'recovering': Em Recuperação (metade inferior preenchida)
+- 'mental-disorder': Transtorno Mental (metade esquerda preenchida)
+- 'adopted': Filho Adotado (colchetes roxos ao redor)
+- 'foster': Filho de Criação (cantos marcados roxos)
 - 'stillborn': Natimorto (X pequeno)
 - 'miscarriage': Aborto Espontâneo (círculo pequeno preenchido)
-- 'abortion': Aborto Induzido (X maior)
+- 'abortion': Aborto Provocado (X maior)
 
 RELAÇÕES (em src/pages/Index.tsx, função addRelation):
 - 'children': Filhos (linha verde - 2 pais + filhos)
 - 'marriage': Casamento (linha verde esmeralda sólida)
 - 'divorce': Divórcio (linha vermelha com 2 barras)
 - 'separation': Separação (linha laranja com 1 barra)
+- 'back-together': Voltaram Juntos (linha verde com 1 barra vermelha)
 - 'living-together': Morando Junto (linha verde água tracejada)
 - 'distant': Distante (linha cinza pontilhada)
 - 'conflict': Conflituoso (linha âmbar ondulada)
@@ -274,6 +285,7 @@ RELAÇÕES (em src/pages/Index.tsx, função addRelation):
 - 'caregiver': Cuidador/Dependente (linha azul céu com seta)
 - 'hostility': Hostilidade (linha vermelha com X's)
 - 'manipulation': Manipulação (linha índigo espiral)
+- 'siblings': Irmãos (linha azul simples)
 
 SUAS RESPONSABILIDADES:
 

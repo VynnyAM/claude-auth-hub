@@ -822,6 +822,18 @@ const Index = () => {
           ctx.beginPath();
           ctx.moveTo(midX, midY - 10);
           ctx.lineTo(midX, midY + 10);
+        } else if (rel.relationType === 'back-together') {
+          // Voltaram a morar juntos após separação
+          ctx.strokeStyle = '#4ade80';
+          ctx.lineWidth = 2;
+          ctx.lineTo(to.x, to.y);
+          ctx.stroke();
+          // Uma barra no meio (indicando que houve separação)
+          ctx.beginPath();
+          ctx.strokeStyle = '#ef4444';
+          ctx.moveTo(midX, midY - 10);
+          ctx.lineTo(midX, midY + 10);
+          ctx.stroke();
         } else if (rel.relationType === 'living-together') {
           ctx.strokeStyle = '#4ade80';
           ctx.lineWidth = 2;
@@ -1113,8 +1125,8 @@ const Index = () => {
         ctx.fill();
         ctx.strokeStyle = element.selected ? '#10b981' : '#6b7280';
         ctx.stroke();
-      } else if (element.type === 'twins') {
-        // Gêmeos (dois círculos conectados)
+      } else if (element.type === 'twins' || element.type === 'fraternal-twins') {
+        // Gêmeos fraternos (dois círculos conectados na base)
         ctx.fillStyle = '#cffafe';
         ctx.beginPath();
         ctx.arc(element.x - 12, element.y, 20, 0, 2 * Math.PI);
@@ -1123,6 +1135,33 @@ const Index = () => {
         ctx.stroke();
         ctx.beginPath();
         ctx.arc(element.x + 12, element.y, 20, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.stroke();
+        
+        // Linha conectando na base
+        ctx.beginPath();
+        ctx.moveTo(element.x - 12, element.y + 20);
+        ctx.lineTo(element.x + 12, element.y + 20);
+        ctx.stroke();
+      } else if (element.type === 'identical-twins') {
+        // Gêmeos idênticos (dois círculos com triângulo conectando)
+        ctx.fillStyle = '#cffafe';
+        ctx.beginPath();
+        ctx.arc(element.x - 12, element.y, 20, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.strokeStyle = element.selected ? '#10b981' : '#06b6d4';
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(element.x + 12, element.y, 20, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.stroke();
+        
+        // Triângulo conectando na base
+        ctx.beginPath();
+        ctx.moveTo(element.x - 12, element.y + 20);
+        ctx.lineTo(element.x, element.y + 30);
+        ctx.lineTo(element.x + 12, element.y + 20);
+        ctx.closePath();
         ctx.fill();
         ctx.stroke();
       } else if (element.type === 'pet') {
@@ -1144,7 +1183,21 @@ const Index = () => {
         ctx.stroke();
       }
 
-      // Status especiais
+      // Status especiais - aplicar primeiro para não sobrepor
+      // Pessoa índice (PI) - borda destacada
+      if (element.status === 'index-person') {
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 4;
+        if (element.type === 'male') {
+          ctx.strokeRect(element.x - 28, element.y - 28, 56, 56);
+        } else if (element.type === 'female') {
+          ctx.beginPath();
+          ctx.arc(element.x, element.y, 28, 0, 2 * Math.PI);
+          ctx.stroke();
+        }
+      }
+      
+      // Status de falecimento
       if (element.status === 'deceased') {
         ctx.strokeStyle = '#ef4444';
         ctx.lineWidth = 3;
@@ -1154,28 +1207,107 @@ const Index = () => {
         ctx.moveTo(element.x + 20, element.y - 20);
         ctx.lineTo(element.x - 20, element.y + 20);
         ctx.stroke();
-      } else if (element.status === 'substance-abuse') {
-        // Linha preta embaixo do símbolo
-        ctx.strokeStyle = '#000000';
-        ctx.lineWidth = 4;
-        ctx.beginPath();
-        ctx.moveTo(element.x - 25, element.y + 30);
-        ctx.lineTo(element.x + 25, element.y + 30);
-        ctx.stroke();
-      } else if (element.status === 'adopted') {
-        // Linha pontilhada ao redor
-        ctx.setLineDash([5, 5]);
-        ctx.strokeStyle = '#8b5cf6';
-        ctx.lineWidth = 2;
+      } 
+      
+      // Abuso de álcool ou drogas - símbolo preenchido
+      if (element.status === 'substance-abuse') {
         if (element.type === 'male') {
-          ctx.strokeRect(element.x - 28, element.y - 28, 56, 56);
+          ctx.fillStyle = '#000000';
+          ctx.fillRect(element.x - 25, element.y - 25, 50, 50);
+          ctx.strokeStyle = element.selected ? '#10b981' : '#3b82f6';
+          ctx.strokeRect(element.x - 25, element.y - 25, 50, 50);
         } else if (element.type === 'female') {
+          ctx.fillStyle = '#000000';
           ctx.beginPath();
-          ctx.arc(element.x, element.y, 28, 0, 2 * Math.PI);
+          ctx.arc(element.x, element.y, 25, 0, 2 * Math.PI);
+          ctx.fill();
+          ctx.strokeStyle = element.selected ? '#10b981' : '#ec4899';
           ctx.stroke();
         }
-        ctx.setLineDash([]);
-      } else if (element.status === 'stillborn') {
+      }
+      
+      // Em recuperação - símbolo parcialmente preenchido (metade inferior)
+      if (element.status === 'recovering') {
+        if (element.type === 'male') {
+          ctx.fillStyle = '#000000';
+          ctx.fillRect(element.x - 25, element.y, 50, 25);
+        } else if (element.type === 'female') {
+          ctx.fillStyle = '#000000';
+          ctx.beginPath();
+          ctx.arc(element.x, element.y, 25, 0, Math.PI);
+          ctx.fill();
+        }
+      }
+      
+      // Transtorno mental - metade preenchida
+      if (element.status === 'mental-disorder') {
+        if (element.type === 'male') {
+          ctx.fillStyle = '#000000';
+          ctx.fillRect(element.x - 25, element.y - 25, 25, 50);
+        } else if (element.type === 'female') {
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(element.x, element.y, 25, Math.PI / 2, 3 * Math.PI / 2);
+          ctx.lineTo(element.x, element.y);
+          ctx.closePath();
+          ctx.fillStyle = '#000000';
+          ctx.fill();
+          ctx.restore();
+        }
+      }
+      
+      // Filho adotado - colchetes ao redor
+      if (element.status === 'adopted') {
+        ctx.strokeStyle = '#8b5cf6';
+        ctx.lineWidth = 2;
+        const bracketSize = 35;
+        const bracketWidth = 8;
+        
+        // Colchete esquerdo
+        ctx.beginPath();
+        ctx.moveTo(element.x - bracketSize, element.y - bracketSize);
+        ctx.lineTo(element.x - bracketSize - bracketWidth, element.y - bracketSize);
+        ctx.lineTo(element.x - bracketSize - bracketWidth, element.y + bracketSize);
+        ctx.lineTo(element.x - bracketSize, element.y + bracketSize);
+        ctx.stroke();
+        
+        // Colchete direito
+        ctx.beginPath();
+        ctx.moveTo(element.x + bracketSize, element.y - bracketSize);
+        ctx.lineTo(element.x + bracketSize + bracketWidth, element.y - bracketSize);
+        ctx.lineTo(element.x + bracketSize + bracketWidth, element.y + bracketSize);
+        ctx.lineTo(element.x + bracketSize, element.y + bracketSize);
+        ctx.stroke();
+      }
+      
+      // Filho de criação (foster) - similar aos colchetes mas diferente
+      if (element.status === 'foster') {
+        ctx.strokeStyle = '#a855f7';
+        ctx.lineWidth = 2;
+        const bracketSize = 35;
+        
+        // Linhas nos cantos
+        ctx.beginPath();
+        // Canto superior esquerdo
+        ctx.moveTo(element.x - bracketSize - 5, element.y - bracketSize);
+        ctx.lineTo(element.x - bracketSize, element.y - bracketSize);
+        ctx.lineTo(element.x - bracketSize, element.y - bracketSize + 5);
+        // Canto superior direito
+        ctx.moveTo(element.x + bracketSize + 5, element.y - bracketSize);
+        ctx.lineTo(element.x + bracketSize, element.y - bracketSize);
+        ctx.lineTo(element.x + bracketSize, element.y - bracketSize + 5);
+        // Canto inferior esquerdo
+        ctx.moveTo(element.x - bracketSize - 5, element.y + bracketSize);
+        ctx.lineTo(element.x - bracketSize, element.y + bracketSize);
+        ctx.lineTo(element.x - bracketSize, element.y + bracketSize - 5);
+        // Canto inferior direito
+        ctx.moveTo(element.x + bracketSize + 5, element.y + bracketSize);
+        ctx.lineTo(element.x + bracketSize, element.y + bracketSize);
+        ctx.lineTo(element.x + bracketSize, element.y + bracketSize - 5);
+        ctx.stroke();
+      }
+      
+      if (element.status === 'stillborn') {
         // Pequeno X
         ctx.strokeStyle = '#ef4444';
         ctx.lineWidth = 2;
@@ -1265,12 +1397,30 @@ const Index = () => {
         ctx.fillStyle = '#1e293b';
       }
       
-      if (element.name) {
+      // Mostrar informações do elemento
+      if (element.name || element.age || element.birthDate || element.deathDate) {
         ctx.font = '12px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText(element.name, element.x, element.y + 45);
-        if (element.age) {
-          ctx.fillText(element.age + ' anos', element.x, element.y + 60);
+        let yOffset = 45;
+        
+        if (element.name) {
+          ctx.fillText(element.name, element.x, element.y + yOffset);
+          yOffset += 15;
+        }
+        
+        // Mostrar idade dentro do símbolo se fornecida
+        if (element.age && !element.birthDate) {
+          ctx.fillText(element.age, element.x, element.y + yOffset);
+          yOffset += 15;
+        }
+        
+        // Mostrar datas de nascimento e morte
+        if (element.birthDate || element.deathDate) {
+          const birthYear = element.birthDate || '';
+          const deathYear = element.deathDate || '';
+          const dateText = `${birthYear}${deathYear ? ' - ' + deathYear : ''}`;
+          ctx.font = '10px Arial';
+          ctx.fillText(dateText, element.x, element.y + yOffset);
         }
       }
       
@@ -1543,7 +1693,15 @@ const Index = () => {
                   variant="outline"
                   size="sm"
                 >
-                  👥 Gêmeos
+                  👥 Gêmeos Fraternos
+                </Button>
+                <Button
+                  onClick={() => addElement('identical-twins')}
+                  className="w-full bg-cyan-600/10 hover:bg-cyan-600/20 border-cyan-600/30 text-cyan-800"
+                  variant="outline"
+                  size="sm"
+                >
+                  👯 Gêmeos Idênticos
                 </Button>
                 <Button
                   onClick={() => addElement('pet')}
@@ -1590,6 +1748,14 @@ const Index = () => {
                   size="sm"
                 >
                   Separação Conjugal
+                </Button>
+                <Button
+                  onClick={() => addRelation('back-together')}
+                  className="w-full bg-emerald-400/10 hover:bg-emerald-400/20 border-emerald-400/30 text-emerald-600"
+                  variant="outline"
+                  size="sm"
+                >
+                  Voltaram Juntos
                 </Button>
                 <Button
                   onClick={() => addRelation('living-together')}
@@ -1750,11 +1916,15 @@ const Index = () => {
                       <SelectContent>
                         <SelectItem value="alive">Vivo</SelectItem>
                         <SelectItem value="deceased">Falecido</SelectItem>
-                        <SelectItem value="adopted">Adotivo</SelectItem>
-                        <SelectItem value="stillborn">Nascimento Morto</SelectItem>
+                        <SelectItem value="index-person">Pessoa Índice (PI)</SelectItem>
+                        <SelectItem value="adopted">Filho Adotado</SelectItem>
+                        <SelectItem value="foster">Filho de Criação</SelectItem>
+                        <SelectItem value="stillborn">Natimorto</SelectItem>
                         <SelectItem value="miscarriage">Aborto Espontâneo</SelectItem>
-                        <SelectItem value="abortion">Aborto Induzido</SelectItem>
-                        <SelectItem value="substance-abuse">Abuso de Substância</SelectItem>
+                        <SelectItem value="abortion">Aborto Provocado</SelectItem>
+                        <SelectItem value="substance-abuse">Abuso de Álcool/Drogas</SelectItem>
+                        <SelectItem value="recovering">Em Recuperação</SelectItem>
+                        <SelectItem value="mental-disorder">Transtorno Mental</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
