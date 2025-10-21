@@ -23,37 +23,49 @@ serve(async (req) => {
 
     // Se extractFamily for true, usar modo de extração de dados
     if (extractFamily) {
-      const extractionPrompt = `Você é um assistente especialista em genogramas.
-Sempre gere uma estrutura de saída em JSON com pessoas e relações. Para cada relação entre duas pessoas, inclua o campo "type" com um dos valores apropriados.
+      const extractionPrompt = `Você é um assistente especialista em genogramas familiares.
 
-REGRAS OBRIGATÓRIAS (PRIORIDADE):
+Sua função é interpretar o texto enviado pelo usuário e gerar uma estrutura de dados com as pessoas e suas relações familiares.
 
-1. Se o texto do usuário contiver qualquer palavra-chave de separação (separad, separados, separou, divorciad, divórcio, ex-marido, ex-esposa, ex-companheiro, sem convivência, não mora junto), DEFINA o tipo da relação como "separation" (separados) ou "divorce" (divorciados) conforme a palavra.
+REGRAS OBRIGATÓRIAS:
+1. Identifique as pessoas citadas e relacione-as corretamente (pais, filhos, irmãos, avós etc.).
+2. Sempre inclua o campo "type" nas relações, indicando o tipo correto de relação.
+3. Quando o texto mencionar qualquer palavra indicando separação ou divórcio (ex: "separados", "divorciados", "ex-marido", "ex-esposa", "ex-companheiro", "não estão mais juntos", "não moram juntos"), o tipo da relação deve ser "separation" ou "divorce".
+4. Se aparecer tanto palavras de casamento quanto de separação, priorize SEMPRE "separation" ou "divorce".
+5. Só use "marriage" quando o texto indicar claramente que o casal ainda está junto (ex: "casados", "vivem juntos", "unidos", "moram juntos", "marido e mulher").
+6. Se o texto não deixar claro o tipo de relação conjugal, use "unknown".
+7. Para "namorados" use "living-together", para "união estável" também use "living-together".
+8. Para "ex-namorados", "ex-companheiros" use "breakup".
 
-2. Se o texto contiver palavras de casamento (casados, casamento, marido, esposa, juntos, moram juntos, pais) MAS TAMBÉM contiver palavras de separação (ver regra 1), use a regra 1 (separados/divorciados tem prioridade).
-
-3. Se o texto mencionar "namorados", "namoro" → use "living-together".
-   Se mencionar "união estável", "moram juntos" sem indicação de casamento formal → use "living-together".
-
-4. Se o texto mencionar explicitamente "casados", "casamento", "marido e mulher" sem palavras de separação → use "marriage".
-
-5. Se mencionar apenas "pais", "pai e mãe" sem contexto de estado conjugal E sem palavras de separação → assuma "marriage".
-
-6. Se não houver indicação clara de estado conjugal, NÃO assuma nada - deixe apenas a relação de parentesco (ex: apenas marcar que são pais dos filhos).
-
-OUTRAS INSTRUÇÕES:
+IDENTIFICAÇÃO DE PESSOAS:
 - Se o usuário não informar nome, deixe vazio
 - Se não informar idade, deixe vazio
 - Identifique o gênero pelo papel (pai=male, mãe=female, filho/irmão=male, filha/irmã=female)
-- Identifique outras relações mencionadas (distante, próximo, conflito, falecido, etc.)
-- Para relações entre pais e filhos, SEMPRE identifique a relação conjugal dos pais SEPARADAMENTE da relação de parentesco
+- Identifique status se mencionado (falecido, adotado, etc.)
 
-IMPORTANTE: NÃO desenhe o genograma diretamente — retorne SEMPRE os dados estruturados. O front-end é responsável por traduzir o tipo em símbolos visuais.
+IMPORTANTE: 
+- Sempre garanta que pais separados NÃO apareçam com símbolo de casamento.
+- Para relações entre pais e filhos, identifique a relação conjugal dos pais SEPARADAMENTE da relação de parentesco.
+- Gere IDs únicos para cada pessoa (p1, p2, p3...) e relação (r1, r2, r3...).
+
+FORMATO DE SAÍDA ESPERADO (sempre em JSON estruturado):
+{
+  "pessoas": [
+    {"id":"p1","nome":"José","genero":"male","papel":"pai"},
+    {"id":"p2","nome":"Maria","genero":"female","papel":"mãe"},
+    {"id":"p3","nome":"Vinicius","genero":"male","papel":"filho"}
+  ],
+  "relacoes": [
+    {"id":"r1","pessoas":["p1","p2"],"tipo":"separados"},
+    {"id":"r2","pessoas":["p3","p1"],"tipo":"filho"},
+    {"id":"r3","pessoas":["p3","p2"],"tipo":"filho"}
+  ]
+}
 
 EXEMPLOS:
-- Entrada: "Sou filho de José e Maria, que são separados." → relação José–Maria type: "separation"
-- Entrada: "Meus pais são casados e têm 2 filhos." → relação pais type: "marriage"
-- Entrada: "Meu pai João e minha mãe Ana estão divorciados." → relação João–Ana type: "divorce"
+- Entrada: "Sou filho de José e Maria, que são separados." → Relação José–Maria: type "separation"
+- Entrada: "Meus pais são casados e têm dois filhos." → Relação pais: type "marriage"
+- Entrada: "Meu pai é José, ex-marido de Maria." → Relação José–Maria: type "divorce" ou "breakup"
 
 Retorne os dados estruturados usando a ferramenta extract_family_data.`;
 
@@ -106,8 +118,8 @@ Retorne os dados estruturados usando a ferramenta extract_family_data.`;
                         id: { type: "string", description: "ID único da relação (ex: r1, r2, r3)" },
                         type: { 
                           type: "string",
-                          enum: ["marriage", "divorce", "separation", "living-together", "distant", "conflict", "breakup", "very-close", "fused-conflictual", "alliance", "harmonic", "vulnerable", "physical-abuse", "emotional-abuse", "caregiver", "hostility", "manipulation", "children"],
-                          description: "Tipo de relação - PRIORIDADE: se houver palavras de separação/divórcio, use separation ou divorce mesmo que haja palavras de casamento"
+                          enum: ["marriage", "divorce", "separation", "living-together", "breakup", "distant", "conflict", "very-close", "fused-conflictual", "alliance", "harmonic", "vulnerable", "physical-abuse", "emotional-abuse", "caregiver", "hostility", "manipulation", "children", "unknown"],
+                          description: "Tipo de relação - PRIORIDADE ABSOLUTA: palavras de separação/divórcio prevalecem sobre casamento. Use 'unknown' quando não houver informação clara sobre o tipo de relação conjugal."
                         },
                         members: {
                           type: "array",
