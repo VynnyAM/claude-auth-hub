@@ -1927,19 +1927,6 @@ const Index = () => {
             </DialogDescription>
           </DialogHeader>
 
-          {subscription?.status === 'active' && (
-            <div className="mb-4">
-              <Button 
-                onClick={handleManageSubscription}
-                disabled={subscribing}
-                variant="outline"
-                className="w-full"
-              >
-                Gerenciar Minha Assinatura no Stripe
-              </Button>
-            </div>
-          )}
-
           <div className="grid md:grid-cols-2 gap-4">
             {/* Plano Mensal */}
             <div className="bg-card rounded-xl shadow-lg p-6 border-2 border-border hover:border-primary/50 transition-all">
