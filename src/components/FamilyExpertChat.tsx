@@ -138,33 +138,27 @@ export const FamilyExpertChat = ({ onGenerateGenogram, isButton = false }: Famil
         r.type.includes('casamento') || 
         r.type.includes('separação') ||
         r.type.includes('divórcio') ||
-        r.type.includes('divorciado') ||
-        r.type.includes('separado')
+        r.type.includes('divorciado')
       );
       
       let relationType = 'marriage';
-      let isSeparated = false;
-      
       if (parentsRelation) {
         if (parentsRelation.type.includes('separação') || parentsRelation.type.includes('separado')) {
-          isSeparated = true;
+          relationType = 'separation';
         } else if (parentsRelation.type.includes('divórcio') || parentsRelation.type.includes('divorciado')) {
-          isSeparated = true;
+          relationType = 'divorce';
         }
       }
       
-      // REGRA: Pais separados NÃO devem ter linha de casamento entre eles
-      if (!isSeparated) {
-        elements.push({
-          id: baseId + idCounter++,
-          type: 'relation',
-          relationType,
-          from: fatherId,
-          to: motherId,
-          x: 0,
-          y: 0
-        });
-      }
+      elements.push({
+        id: baseId + idCounter++,
+        type: 'relation',
+        relationType,
+        from: fatherId,
+        to: motherId,
+        x: 0,
+        y: 0
+      });
       
       // Relação com filhos
       if (childIds.length > 0) {
@@ -181,7 +175,34 @@ export const FamilyExpertChat = ({ onGenerateGenogram, isButton = false }: Famil
       }
     }
     
-    // REGRA: Relações entre irmãos foram removidas - não criar automaticamente
+    // Adicionar relações entre irmãos se mencionadas
+    const siblingRelations = familyData.relations.filter(r => 
+      r.type.includes('distante') || 
+      r.type.includes('próximo') ||
+      r.type.includes('conflito')
+    );
+    
+    siblingRelations.forEach(rel => {
+      if (childIds.length >= 2) {
+        let relType = 'distant';
+        if (rel.type.includes('próximo') || rel.type.includes('proximo')) {
+          relType = 'very-close';
+        } else if (rel.type.includes('conflito')) {
+          relType = 'conflict';
+        }
+        
+        // Criar relação entre primeiro e segundo filho como exemplo
+        elements.push({
+          id: baseId + idCounter++,
+          type: 'relation',
+          relationType: relType,
+          from: childIds[0],
+          to: childIds[1],
+          x: 0,
+          y: 0
+        });
+      }
+    });
     
     return elements;
   };
