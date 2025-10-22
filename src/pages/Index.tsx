@@ -29,8 +29,8 @@ import { FamilyExpertChat } from '@/components/FamilyExpertChat';
 import { GenogramLegend } from '@/components/GenogramLegend';
 
 const PRICE_IDS = {
-  monthly: 'price_1SKk0fBOrcC2OeBVSHvZPa7i',
-  annual: 'price_1SKk0xBOrcC2OeBVV8jT9LPk',
+  monthly: 'price_1SL7CkDr0uqPhV0MXBCGZQOf',
+  annual: 'price_1SL7EhDr0uqPhV0Mf9t9oF6G',
 };
 
 const Index = () => {

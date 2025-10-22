@@ -145,7 +145,7 @@ const Auth = () => {
     setLoadingContribution(true);
     try {
       const { data, error } = await supabase.functions.invoke('create-donation', {
-        body: { priceId: 'price_1SK9qJBOrcC2OeBVr9qHsUgs' }
+        body: { priceId: 'price_1SL7DoDr0uqPhV0Mc9GBt6Eq' }
       });
       
       if (error) throw error;
