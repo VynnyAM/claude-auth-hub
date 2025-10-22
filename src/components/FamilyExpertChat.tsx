@@ -47,6 +47,34 @@ export const FamilyExpertChat = ({ onGenerateGenogram, isButton = false }: Famil
   }, [messages]);
 
   const generateGenogramFromData = (familyData: FamilyData) => {
+    // Defesa adicional: limpar relações contraditórias vindas do backend
+    try {
+      if (Array.isArray(familyData.relations)) {
+        const grouped = new Map<string, any[]>();
+        familyData.relations.forEach(r => {
+          const members = r.members || [];
+          if (!Array.isArray(members)) return;
+          const key = members.slice().sort().join('|');
+          if (!grouped.has(key)) grouped.set(key, []);
+          grouped.get(key)!.push(r);
+        });
+
+        const cleaned: any[] = [];
+        for (const [key, rels] of grouped.entries()) {
+          const hasSeparation = rels.some(rr => ['divorce', 'separation', 'breakup'].includes(rr.type));
+          if (hasSeparation) {
+            rels.forEach(rr => { if (rr.type !== 'marriage') cleaned.push(rr); });
+          } else {
+            rels.forEach(rr => cleaned.push(rr));
+          }
+        }
+
+        familyData = { ...familyData, relations: cleaned };
+      }
+    } catch (e) {
+      console.error('Erro ao normalizar relações no frontend:', e);
+    }
+
     const elements: GenogramElement[] = [];
     const baseId = Date.now();
     let idCounter = 0;
@@ -133,23 +161,33 @@ export const FamilyExpertChat = ({ onGenerateGenogram, isButton = false }: Famil
     
     // Criar relações
     if (fatherId && motherId) {
-      // Verificar tipo de relação entre os pais
-      const parentsRelation = familyData.relations.find(r => 
-        r.type.includes('casamento') || 
-        r.type.includes('separação') ||
-        r.type.includes('divórcio') ||
-        r.type.includes('divorciado')
-      );
-      
-      let relationType = 'marriage';
-      if (parentsRelation) {
-        if (parentsRelation.type.includes('separação') || parentsRelation.type.includes('separado')) {
-          relationType = 'separation';
-        } else if (parentsRelation.type.includes('divórcio') || parentsRelation.type.includes('divorciado')) {
+      // Verificar tipo de relação entre os pais — aceitar outputs em português e inglês
+      const parentsRelation = familyData.relations.find(r => {
+        if (!r?.type) return false;
+        const t = String(r.type).toLowerCase();
+        return /marri|casad|casamento|separ|separação|separados|separated|divorc|divórcio|divorciad|ex-|breakup|living-together|uni[oó]n|união|namorad/.test(t);
+      });
+
+      let relationType: string = 'marriage';
+      if (parentsRelation && parentsRelation.type) {
+        const t = String(parentsRelation.type).toLowerCase();
+
+        // Priorizar palavras que indicam divórcio/rompimento
+        if (/divorc|divórc|divorciad/.test(t) || /ex-/.test(t) || /breakup/.test(t)) {
           relationType = 'divorce';
+        } else if (/separ|separação|separados|separated/.test(t)) {
+          relationType = 'separation';
+        } else if (/marri|casad|casamento|vivem juntos|moram juntos|unidos/.test(t)) {
+          relationType = 'marriage';
+        } else if (/living-together|living together|uni[oó]n|união|namorad/.test(t)) {
+          relationType = 'living-together';
+        } else if (/breakup/.test(t)) {
+          relationType = 'breakup';
+        } else if (/unknown/.test(t)) {
+          relationType = 'unknown';
         }
       }
-      
+
       elements.push({
         id: baseId + idCounter++,
         type: 'relation',
@@ -334,7 +372,7 @@ export const FamilyExpertChat = ({ onGenerateGenogram, isButton = false }: Famil
             <p className="font-medium mb-2">Olá! Sou o especialista em genogramas.</p>
             <p className="text-sm">Descreva sua família e vou criar o genograma para você.</p>
             <p className="text-xs mt-4 text-muted-foreground">
-              Exemplo: "Tenho um pai chamado José de 50 anos, mãe Maria de 48 anos e dois irmãos. Meus pais são separados."
+              Exemplo: "Tenho um pai chamado José de 50 anos e mãe Maria de 48 anos. Meus pais são separados."
             </p>
           </div>
         )}

@@ -147,15 +147,7 @@ export const GenogramLegend = ({ open, onOpenChange }: GenogramLegendProps) => {
                   </div>
                 </div>
                 
-                <div className="flex items-center gap-4">
-                  <div className="w-20 h-12 flex items-center justify-center">
-                    <div className="w-full h-0.5 bg-blue-500"></div>
-                  </div>
-                  <div>
-                    <p className="font-medium">Irmãos</p>
-                    <p className="text-sm text-muted-foreground">Linha azul sólida horizontal</p>
-                  </div>
-                </div>
+                {/* 'Irmãos' legend removed per UI change request */}
               </div>
             </div>
 

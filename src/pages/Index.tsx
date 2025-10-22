@@ -683,20 +683,27 @@ const Index = () => {
         
         // Caso 1: Casal (ambos os pais presentes)
         if (from && to) {
-          // Verificar se já existe uma relação de casamento manual entre os pais
-          const hasMarriageRelation = filteredElements.some(e => 
-            e.type === 'relation' && 
-            e.relationType === 'marriage' && 
-            ((e.from === from.id && e.to === to.id) || (e.from === to.id && e.to === from.id))
+          // Verificar se já existe uma relação conjugal manual entre os pais.
+          // Não desenhar a linha de casamento automática se já houver
+          // uma relação de separação/divórcio/rompimento entre esses mesmos pais.
+          const conjugalRelationsBetweenParents = filteredElements.filter(e =>
+            e.type === 'relation' &&
+            ((e.from === from.id && e.to === to.id) || (e.from === to.id && e.to === from.id)) &&
+            (e.relationType === 'marriage' || e.relationType === 'divorce' || e.relationType === 'separation' || e.relationType === 'back-together' || e.relationType === 'living-together' || e.relationType === 'breakup')
           );
+
+          const hasMarriageRelation = conjugalRelationsBetweenParents.some(e => e.relationType === 'marriage' || e.relationType === 'back-together' || e.relationType === 'living-together');
+          const hasSeparationOrDivorce = conjugalRelationsBetweenParents.some(e => e.relationType === 'divorce' || e.relationType === 'separation' || e.relationType === 'breakup');
           
           const leftParent = from.x < to.x ? from : to;
           const rightParent = from.x < to.x ? to : from;
           const marriageLineY = (leftParent.y + rightParent.y) / 2;
           
           // ETAPA 1: Linha horizontal do casamento dos pais
-          // Só desenhar se NÃO existir uma relação de casamento manual
-          if (!hasMarriageRelation) {
+          // Só desenhar a linha de casamento AUTOMÁTICA se NÃO existir
+          // uma relação de casamento manual e também NÃO existir uma
+          // relação de separação/divórcio entre os mesmos pais.
+          if (!hasMarriageRelation && !hasSeparationOrDivorce) {
             ctx.beginPath();
             ctx.moveTo(leftParent.x, marriageLineY);
             ctx.lineTo(rightParent.x, marriageLineY);
@@ -1869,14 +1876,7 @@ const Index = () => {
                 >
                   Manipulação
                 </Button>
-                <Button
-                  onClick={() => addRelation('siblings')}
-                  className="w-full bg-blue-500/10 hover:bg-blue-500/20 border-blue-500/30 text-blue-700"
-                  variant="outline"
-                  size="sm"
-                >
-                  Irmãos
-                </Button>
+                {/* 'Irmãos' relation removed as requested */}
               </div>
             </div>
 

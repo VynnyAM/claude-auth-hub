@@ -182,11 +182,97 @@ Retorne os dados estruturados usando a ferramenta extract_family_data.`;
       // Extrair dados da família do tool call
       const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
       let familyData = null;
-      
+
       if (toolCall?.function?.arguments) {
         try {
           familyData = JSON.parse(toolCall.function.arguments);
           console.log('Extracted family data:', familyData);
+
+          // Normalizar nomes de campos em PT/EN (ex: relacoes -> relations)
+          if (!familyData.relations && familyData.relacoes) {
+            familyData.relations = familyData.relacoes;
+          }
+          if (!familyData.members && familyData.pessoas) {
+            familyData.members = familyData.pessoas;
+          }
+
+          // Função de normalização de tipo de relação
+          const allowed = new Set([
+            'marriage','divorce','separation','back-together','living-together','breakup','distant','conflict','very-close','fused-conflictual','alliance','harmonic','vulnerable','physical-abuse','emotional-abuse','caregiver','hostility','manipulation','children','siblings','unknown'
+          ]);
+
+          const normalizeRelationType = (raw: any) => {
+            if (!raw) return 'unknown';
+            const t = String(raw).toLowerCase();
+
+            // Priorizar divórcio/rompimento
+            if (/divorc|divórc|divorciad|ex-/.test(t) || /separad.*divorc?/.test(t) && /divorc/.test(t)) return 'divorce';
+            if (/separ|separação|separados|separated/.test(t)) return 'separation';
+            if (/breakup|rompim|rompimento|ex-namorad|ex-compan/.test(t)) return 'breakup';
+            if (/marri|casad|casamento|vivem juntos|moram juntos|unidos|casados/.test(t)) return 'marriage';
+            if (/living-together|living together|uni[oó]n|união|uni[oó]n estável|uni[oó]n-estavel|namorad/.test(t)) return 'living-together';
+            if (/filh|child|children/.test(t)) return 'children';
+            if (/irm[aã]o|siblings|irmãos|irmas/.test(t)) return 'siblings';
+            if (/distant|distante/.test(t)) return 'distant';
+            if (/conflict|conflit|conflito/.test(t)) return 'conflict';
+
+            // Já está no formato esperado?
+            if (allowed.has(t)) return t;
+
+            return 'unknown';
+          };
+
+          // Normalizar cada relação se existir
+          if (Array.isArray(familyData.relations)) {
+            familyData.relations = familyData.relations.map((r: any) => {
+              try {
+                const normalized = { ...r };
+                if (r.type) {
+                  normalized.type = normalizeRelationType(r.type);
+                } else if (r.tipo) {
+                  // aceitar 'tipo' em PT
+                  normalized.type = normalizeRelationType(r.tipo);
+                } else {
+                  normalized.type = 'unknown';
+                }
+                return normalized;
+              } catch (e) {
+                return { ...r, type: 'unknown' };
+              }
+            });
+            
+            // Remover relações contraditórias: se há 'divorce'/'separation'/'breakup' entre os mesmos membros,
+            // então descartar quaisquer relações 'marriage' que envolvam exatamente esses mesmos membros.
+            try {
+              const grouped = new Map<string, any[]>();
+              familyData.relations.forEach((r: any) => {
+                const members = r.members || r.pessoas || [];
+                if (!Array.isArray(members)) return;
+                const key = members.slice().sort().join('|');
+                if (!grouped.has(key)) grouped.set(key, []);
+                grouped.get(key)!.push(r);
+              });
+
+              const cleanedRelations: any[] = [];
+              for (const [key, rels] of grouped.entries()) {
+                const hasSeparation = rels.some(rr => ['divorce', 'separation', 'breakup'].includes(rr.type));
+                if (hasSeparation) {
+                  // manter todas as relações exceto 'marriage'
+                  rels.forEach(rr => {
+                    if (rr.type !== 'marriage') cleanedRelations.push(rr);
+                  });
+                } else {
+                  // manter todas
+                  rels.forEach(rr => cleanedRelations.push(rr));
+                }
+              }
+
+              familyData.relations = cleanedRelations;
+            } catch (e) {
+              console.error('Erro ao limpar relações conflitantes:', e);
+            }
+          }
+
         } catch (e) {
           console.error('Error parsing family data:', e);
         }
