@@ -198,33 +198,6 @@ Retorne os dados estruturados usando a ferramenta extract_family_data.`;
     }
 
     // Modo normal de chat (código original)
-    const conversationalPrompt = `Você é um especialista em genogramas familiares que ajuda pessoas a descrever suas famílias.
-
-SEU OBJETIVO: Coletar informações completas sobre a família do usuário para criar um genograma preciso.
-
-REGRAS IMPORTANTES:
-1. SEMPRE faça perguntas de esclarecimento quando as informações não estiverem claras
-2. NUNCA invente ou assuma informações que não foram mencionadas
-3. Quando faltar informações, pergunte especificamente sobre:
-   - Nomes das pessoas
-   - Gênero (masculino/feminino)
-   - Tipo de relação entre casais (casados, separados, divorciados, namorando, união estável)
-   - Quem são os pais e quem são os filhos
-   - Status especial (falecido, adotado, etc.)
-
-EXEMPLOS DE PERGUNTAS A FAZER:
-- "Seus pais estão casados ou separados?"
-- "Qual o nome de seu pai e sua mãe?"
-- "Quantos irmãos você tem? São homens ou mulheres?"
-- "Existe alguma pessoa com situação especial (falecido, adotado, etc.)?"
-
-QUANDO VOCÊ TIVER INFORMAÇÕES SUFICIENTES:
-- Resuma as informações coletadas
-- Pergunte se está tudo correto
-- Diga: "Se estiver tudo certo, clique no botão 'Gerar Genograma' abaixo."
-
-SEJA CONVERSACIONAL E AMIGÁVEL, mas sempre busque clareza nas informações.`;
-
     const systemPrompt = `Você é um especialista em genogramas psicológicos e desenvolvimento de software.
 
 CONHECIMENTO SOBRE GENOGRAMAS PSICOLÓGICOS:
@@ -342,7 +315,7 @@ SUAS RESPONSABILIDADES:
       body: JSON.stringify({
         model: "google/gemini-2.5-flash",
         messages: [
-          { role: "system", content: conversationalPrompt },
+          { role: "system", content: systemPrompt },
           ...messages,
         ],
         stream: true,

@@ -35,7 +35,6 @@ export const FamilyExpertChat = ({ onGenerateGenogram, isButton = false }: Famil
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [canGenerate, setCanGenerate] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
@@ -208,64 +207,6 @@ export const FamilyExpertChat = ({ onGenerateGenogram, isButton = false }: Famil
     return elements;
   };
 
-  const chatWithAI = async (userMessages: Message[]): Promise<string> => {
-    const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
-    
-    try {
-      const resp = await fetch(CHAT_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-        },
-        body: JSON.stringify({ 
-          messages: userMessages,
-          extractFamily: false // Modo conversa
-        }),
-      });
-
-      if (!resp.ok) {
-        throw new Error("Falha ao processar informações");
-      }
-
-      const reader = resp.body?.getReader();
-      const decoder = new TextDecoder();
-      let fullResponse = '';
-
-      if (reader) {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          
-          const chunk = decoder.decode(value);
-          const lines = chunk.split('\n');
-          
-          for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              const data = line.slice(6);
-              if (data === '[DONE]') continue;
-              
-              try {
-                const parsed = JSON.parse(data);
-                const content = parsed.choices?.[0]?.delta?.content;
-                if (content) {
-                  fullResponse += content;
-                }
-              } catch (e) {
-                // Ignorar erros de parse
-              }
-            }
-          }
-        }
-      }
-
-      return fullResponse;
-    } catch (error) {
-      console.error('Erro ao conversar com IA:', error);
-      return 'Desculpe, não consegui processar sua mensagem.';
-    }
-  };
-
   const extractFamilyData = async (userMessages: Message[]): Promise<FamilyData | null> => {
     const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
     
@@ -304,38 +245,18 @@ export const FamilyExpertChat = ({ onGenerateGenogram, isButton = false }: Famil
     setIsLoading(true);
 
     try {
-      // Conversar com a IA primeiro
-      const aiResponse = await chatWithAI(newMessages);
+      // Extrair dados da família
+      const familyData = await extractFamilyData(newMessages);
       
+      // Adicionar resposta do assistente
       const assistantMessage: Message = { 
         role: 'assistant', 
-        content: aiResponse
+        content: 'Vou criar as linhas da vida agora.' 
       };
       setMessages([...newMessages, assistantMessage]);
       
-      // Habilitar botão de gerar se parecer haver informações suficientes
-      if (aiResponse.toLowerCase().includes('gerar') || 
-          aiResponse.toLowerCase().includes('criar') ||
-          aiResponse.toLowerCase().includes('pronto')) {
-        setCanGenerate(true);
-      }
-    } catch (error: any) {
-      console.error('Erro no chat:', error);
-      toast({
-        title: "Erro",
-        description: error.message || "Não foi possível processar a mensagem",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleGenerateGenogram = async () => {
-    setIsLoading(true);
-    try {
-      // Extrair dados da família
-      const familyData = await extractFamilyData(messages);
+      // Aguardar um momento para o usuário ver a mensagem
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
       if (familyData && familyData.members.length > 0) {
         // Gerar genograma
@@ -349,21 +270,21 @@ export const FamilyExpertChat = ({ onGenerateGenogram, isButton = false }: Famil
         
         setIsOpen(false);
         setMessages([]);
-        setCanGenerate(false);
       } else {
         toast({
           title: "Informações insuficientes",
-          description: "Por favor, forneça mais detalhes sobre sua família.",
+          description: "Por favor, descreva sua família com mais detalhes.",
           variant: "destructive",
         });
       }
     } catch (error: any) {
-      console.error('Erro ao gerar genograma:', error);
+      console.error('Erro no chat:', error);
       toast({
         title: "Erro",
-        description: "Não foi possível gerar o genograma",
+        description: error.message || "Não foi possível processar a mensagem",
         variant: "destructive",
       });
+      setMessages(messages);
     } finally {
       setIsLoading(false);
     }
@@ -443,16 +364,7 @@ export const FamilyExpertChat = ({ onGenerateGenogram, isButton = false }: Famil
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="p-4 border-t space-y-2">
-        {canGenerate && (
-          <Button
-            onClick={handleGenerateGenogram}
-            disabled={isLoading}
-            className="w-full bg-green-600 hover:bg-green-700"
-          >
-            Gerar Genograma
-          </Button>
-        )}
+      <div className="p-4 border-t">
         <div className="flex gap-2">
           <Input
             value={input}
