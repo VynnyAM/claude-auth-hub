@@ -26,7 +26,7 @@ import { useGenogram, GenogramElement } from '@/hooks/useGenogram';
 import { useSubscription } from '@/hooks/useSubscription';
 import { supabase } from '@/integrations/supabase/client';
 import { FamilyExpertChat } from '@/components/FamilyExpertChat';
-import { GenogramLegend } from '@/components/GenogramLegend';
+import { GenogramTemplates } from '@/components/GenogramTemplates';
 
 const PRICE_IDS = {
   monthly: 'price_1SL7CkDr0uqPhV0MXBCGZQOf',
@@ -58,11 +58,16 @@ const Index = () => {
   const [showClearModal, setShowClearModal] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [showLoadModal, setShowLoadModal] = useState(false);
-  const [showLegendModal, setShowLegendModal] = useState(false);
+  const [showTemplatesModal, setShowTemplatesModal] = useState(false);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [feedbackMessage, setFeedbackMessage] = useState('');
   const [feedbackEmail, setFeedbackEmail] = useState('');
   const [sendingFeedback, setSendingFeedback] = useState(false);
+  const [showQuickEditModal, setShowQuickEditModal] = useState(false);
+  const [editingElement, setEditingElement] = useState<GenogramElement | null>(null);
+  const [quickEditName, setQuickEditName] = useState('');
+  const [quickEditAge, setQuickEditAge] = useState('');
+  const [quickEditStatus, setQuickEditStatus] = useState<string>('alive');
   const [searchTerm, setSearchTerm] = useState('');
   const [genogramTitle, setGenogramTitle] = useState('Novo Genograma');
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -468,6 +473,42 @@ const Index = () => {
 
   const updateElement = (id: number, updates: Partial<GenogramElement>) => {
     setElements(elements.map(e => e.id === id ? { ...e, ...updates } : e));
+  };
+
+  const handleDoubleClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const rect = canvasRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
+    const clicked = elements.find(el => {
+      if (el.type === 'relation') return false;
+      return x >= el.x - 40 && x <= el.x + 40 && y >= el.y - 40 && y <= el.y + 40;
+    });
+    
+    if (clicked) {
+      setEditingElement(clicked);
+      setQuickEditName(clicked.name || '');
+      setQuickEditAge(clicked.age || '');
+      setQuickEditStatus(clicked.status || 'alive');
+      setShowQuickEditModal(true);
+    }
+  };
+
+  const handleQuickEditSave = () => {
+    if (editingElement) {
+      updateElement(editingElement.id, {
+        name: quickEditName,
+        age: quickEditAge,
+        status: quickEditStatus,
+      });
+      setShowQuickEditModal(false);
+      toast({
+        title: "Editado com sucesso",
+        description: "As informações foram atualizadas.",
+      });
+    }
   };
 
   const toggleSelection = (id: number) => {
@@ -1720,13 +1761,13 @@ const Index = () => {
                   Limpar Tela
                 </Button>
                 <Button
-                  onClick={() => setShowLegendModal(true)}
+                  onClick={() => setShowTemplatesModal(true)}
                   className="w-full"
                   variant="outline"
                   size="sm"
                 >
                   <BookOpen className="w-4 h-4 mr-2" />
-                  Legenda
+                  Templates
                 </Button>
               </div>
             </div>
@@ -2059,6 +2100,7 @@ const Index = () => {
                 onMouseMove={handleMouseMove}
                 onMouseUp={handleMouseUp}
                 onMouseLeave={handleMouseUp}
+                onDoubleClick={handleDoubleClick}
                 className="border border-border rounded-lg cursor-crosshair w-full"
                 style={{ maxWidth: '100%', height: 'auto' }}
               />
@@ -2077,6 +2119,96 @@ const Index = () => {
               />
               <p className="text-xs text-muted-foreground mt-2">
                 As notas serão salvas junto com o genograma
+              </p>
+            </div>
+
+            {/* Blog de Atualizações do Sistema */}
+            <div className="bg-card rounded-xl shadow-md p-4 border-l-4 border-primary">
+              <div className="flex items-center gap-2 mb-3">
+                <MessageSquare className="w-5 h-5 text-primary" />
+                <h3 className="text-sm font-semibold text-foreground">Atualizações do Sistema</h3>
+              </div>
+              <div className="space-y-4 max-h-96 overflow-y-auto">
+                {/* Entrada 1 - Mais recente */}
+                <div className="border-l-2 border-muted pl-3 py-2">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-xs font-semibold text-primary">22/10/2025</span>
+                    <span className="text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded">Novo Recurso</span>
+                  </div>
+                  <h4 className="text-sm font-medium text-foreground mb-1">Templates de Genograma</h4>
+                  <p className="text-xs text-muted-foreground">
+                    5 templates prontos para iniciar rapidamente: Família Nuclear, Monoparental, Três Gerações, 
+                    Família Reconstruída e Casal sem Filhos. Acesse pelo botão "Templates"!
+                  </p>
+                </div>
+
+                {/* Entrada 2 */}
+                <div className="border-l-2 border-muted pl-3 py-2">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-xs font-semibold text-primary">22/10/2025</span>
+                    <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded">Melhorias</span>
+                  </div>
+                  <h4 className="text-sm font-medium text-foreground mb-1">Edição Rápida por Duplo Clique</h4>
+                  <p className="text-xs text-muted-foreground">
+                    Agora você pode dar duplo clique em qualquer pessoa para editar rapidamente nome, 
+                    idade e status. Muito mais ágil para preencher informações!
+                  </p>
+                </div>
+
+                {/* Entrada 3 */}
+                <div className="border-l-2 border-muted pl-3 py-2">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-xs font-semibold text-primary">21/10/2025</span>
+                    <span className="text-xs px-2 py-0.5 bg-orange-100 text-orange-700 rounded">Em Manutenção</span>
+                  </div>
+                  <h4 className="text-sm font-medium text-foreground mb-1">Chat IA Temporariamente Desabilitado</h4>
+                  <p className="text-xs text-muted-foreground">
+                    O recurso "Descreva sua família" está em manutenção para melhorias na precisão do reconhecimento 
+                    de relações familiares. Em breve voltaremos com uma versão mais robusta!
+                  </p>
+                </div>
+
+                {/* Entrada 4 */}
+                <div className="border-l-2 border-muted pl-3 py-2">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-xs font-semibold text-primary">20/10/2025</span>
+                    <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded">Melhorias</span>
+                  </div>
+                  <h4 className="text-sm font-medium text-foreground mb-1">Sistema de Layout Hierárquico</h4>
+                  <p className="text-xs text-muted-foreground">
+                    Implementamos algoritmo de layout automático que organiza famílias em gerações (avós → pais → filhos) 
+                    com posicionamento inteligente e espaçamento proporcional.
+                  </p>
+                </div>
+
+                {/* Entrada 5 */}
+                <div className="border-l-2 border-muted pl-3 py-2">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-xs font-semibold text-primary">19/10/2025</span>
+                    <span className="text-xs px-2 py-0.5 bg-purple-100 text-purple-700 rounded">Correção</span>
+                  </div>
+                  <h4 className="text-sm font-medium text-foreground mb-1">Relacionamentos Conjugais Corrigidos</h4>
+                  <p className="text-xs text-muted-foreground">
+                    Corrigido bug onde "pais separados" eram desenhados como casados. 
+                    Agora separação/divórcio é renderizado corretamente com linha vermelha e barras duplas.
+                  </p>
+                </div>
+
+                {/* Entrada 6 */}
+                <div className="border-l-2 border-muted pl-3 py-2">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-xs font-semibold text-primary">18/10/2025</span>
+                    <span className="text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded">Lançamento</span>
+                  </div>
+                  <h4 className="text-sm font-medium text-foreground mb-1">Sistema de Genogramas Online</h4>
+                  <p className="text-xs text-muted-foreground">
+                    Lançamento inicial do sistema com suporte a criação manual de genogramas, 
+                    múltiplos tipos de relações e exportação em PDF. Bem-vindo! 🎉
+                  </p>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground mt-3 pt-3 border-t">
+                💡 Sugestões? Use o botão "Feedback do Sistema" na barra lateral
               </p>
             </div>
           </div>
@@ -2321,8 +2453,84 @@ const Index = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Legend Modal */}
-      <GenogramLegend open={showLegendModal} onOpenChange={setShowLegendModal} />
+      {/* Templates Modal */}
+      <GenogramTemplates 
+        open={showTemplatesModal} 
+        onOpenChange={setShowTemplatesModal}
+        onSelectTemplate={(templateElements) => {
+          setElements(templateElements);
+          toast({
+            title: "Template aplicado",
+            description: "O template foi carregado com sucesso. Você pode editá-lo agora.",
+          });
+        }}
+      />
+
+      {/* Quick Edit Modal */}
+      <Dialog open={showQuickEditModal} onOpenChange={setShowQuickEditModal}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Editar Pessoa</DialogTitle>
+            <DialogDescription>
+              Atualize as informações rapidamente
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="quick-name">Nome</Label>
+              <Input
+                id="quick-name"
+                value={quickEditName}
+                onChange={(e) => setQuickEditName(e.target.value)}
+                placeholder="Digite o nome"
+                autoFocus
+              />
+            </div>
+            
+            <div className="grid gap-2">
+              <Label htmlFor="quick-age">Idade</Label>
+              <Input
+                id="quick-age"
+                value={quickEditAge}
+                onChange={(e) => setQuickEditAge(e.target.value)}
+                placeholder="Digite a idade"
+              />
+            </div>
+            
+            <div className="grid gap-2">
+              <Label htmlFor="quick-status">Status</Label>
+              <Select value={quickEditStatus} onValueChange={(value) => setQuickEditStatus(value)}>
+                <SelectTrigger id="quick-status">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="alive">Vivo</SelectItem>
+                  <SelectItem value="deceased">Falecido</SelectItem>
+                  <SelectItem value="index-person">Pessoa Índice (PI)</SelectItem>
+                  <SelectItem value="adopted">Filho Adotado</SelectItem>
+                  <SelectItem value="foster">Filho de Criação</SelectItem>
+                  <SelectItem value="stillborn">Natimorto</SelectItem>
+                  <SelectItem value="miscarriage">Aborto Espontâneo</SelectItem>
+                  <SelectItem value="abortion">Aborto Provocado</SelectItem>
+                  <SelectItem value="substance-abuse">Abuso de Álcool/Drogas</SelectItem>
+                  <SelectItem value="recovering">Em Recuperação</SelectItem>
+                  <SelectItem value="mental-disorder">Transtorno Mental</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowQuickEditModal(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleQuickEditSave}>
+              Salvar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

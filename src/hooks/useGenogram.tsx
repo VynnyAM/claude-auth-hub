@@ -19,6 +19,7 @@ export interface GenogramElement {
   to?: number;
   children?: number[];
   twinType?: 'fraternal' | 'identical'; // Tipo de gêmeos
+  sourceId?: string | number; // ID original do extrator (ex: 'p1')
 }
 
 export const useGenogram = (userId: string | undefined) => {
