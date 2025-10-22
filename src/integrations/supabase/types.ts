@@ -234,6 +234,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      has_valid_subscription: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "user"
