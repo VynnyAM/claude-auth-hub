@@ -312,9 +312,7 @@ export const FamilyExpertChat = ({ onGenerateGenogram, isButton = false, current
             : "A estrutura familiar foi gerada com base nas informações fornecidas.",
         });
         
-        // Não fecha mais o chat e não limpa mensagens
-        // setIsOpen(false);
-        // setMessages([]);
+        // Chat persiste aberto para o usuário continuar construindo o genograma
       } else {
         toast({
           title: "Informações insuficientes",
