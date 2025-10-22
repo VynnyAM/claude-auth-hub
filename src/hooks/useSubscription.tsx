@@ -36,9 +36,11 @@ export const useSubscription = (userId: string | undefined) => {
     fetchSubscription();
   }, [userId]);
 
-  const canDownload = subscription?.plan === 'basic' || subscription?.plan === 'standard' || subscription?.plan === 'premium';
-  const canSaveLoad = subscription?.plan === 'standard' || subscription?.plan === 'premium';
-  const canCreateMultiple = subscription?.plan === 'standard' || subscription?.plan === 'premium';
+  // During trial or active subscription, all features are available
+  const isActive = subscription?.status === 'active';
+  const canDownload = isActive;
+  const canSaveLoad = isActive;
+  const canCreateMultiple = isActive;
 
   return {
     subscription,
