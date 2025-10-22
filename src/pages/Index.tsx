@@ -40,6 +40,7 @@ const Index = () => {
   const { toast } = useToast();
   const [showPlansModal, setShowPlansModal] = useState(false);
   const [subscribing, setSubscribing] = useState(false);
+  const [isTrialActive, setIsTrialActive] = useState(false);
   const { 
     genograms, 
     currentGenogramId, 
@@ -87,6 +88,31 @@ const Index = () => {
       navigate('/auth');
     }
   }, [user, authLoading, navigate]);
+
+  // Check if user is in trial period
+  useEffect(() => {
+    const checkTrialStatus = async () => {
+      if (user && subscription) {
+        const { data: subData } = await supabase
+          .from('subscriptions')
+          .select('current_period_end, status')
+          .eq('user_id', user.id)
+          .single();
+        
+        if (subData?.current_period_end && subData.status === 'active') {
+          const endDate = new Date(subData.current_period_end);
+          const now = new Date();
+          const createdAt = new Date(user.created_at);
+          const daysSinceCreation = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24);
+          
+          // Check if user is within 3 days of creation and subscription is still active
+          setIsTrialActive(daysSinceCreation <= 3 && endDate > now);
+        }
+      }
+    };
+    
+    checkTrialStatus();
+  }, [user, subscription]);
 
   // Refresh subscription status when user returns from checkout
   useEffect(() => {
@@ -1543,9 +1569,17 @@ const Index = () => {
             </div>
           </div>
           <div className="flex gap-2">
-            <Button onClick={() => setShowPlansModal(true)} variant="outline" size="sm">
+            <Button 
+              onClick={() => setShowPlansModal(true)} 
+              variant="outline" 
+              size="sm"
+              className={isTrialActive ? "bg-green-50 border-green-200 hover:bg-green-100" : ""}
+            >
               <CreditCard className="w-5 h-5 mr-2" />
-              Meu Plano
+              {isTrialActive 
+                ? "Teste grátis de 3 dias do Plano Básico ao criar sua conta" 
+                : "Verifique aqui suas opções de assinatura"
+              }
             </Button>
             <Button onClick={handleLogout} variant="ghost" size="sm">
               <LogOut className="w-5 h-5 mr-2" />
@@ -2175,11 +2209,21 @@ const Index = () => {
           <DialogHeader>
             <DialogTitle className="text-2xl">Gerenciar Assinatura</DialogTitle>
             <DialogDescription>
-              {subscription?.status === 'active' 
+              {isTrialActive 
+                ? '🎉 Você está no período de teste gratuito de 3 dias com acesso total!' 
+                : subscription?.status === 'active' 
                 ? 'Você possui uma assinatura ativa' 
-                : 'Escolha um plano para desbloquear todos os recursos'}
+                : '⚠️ Seu período de teste expirou. Para continuar usando o sistema, escolha uma das opções de assinatura abaixo.'}
             </DialogDescription>
           </DialogHeader>
+
+          {isTrialActive && (
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+              <p className="text-sm text-green-800 font-medium">
+                ✨ Durante o período gratuito, você tem acesso completo a todos os recursos do plano!
+              </p>
+            </div>
+          )}
 
           <div className="grid md:grid-cols-2 gap-4">
             {/* Plano Mensal */}

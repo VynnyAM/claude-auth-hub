@@ -95,9 +95,17 @@ export const useAuth = () => {
           })
           .eq('id', data.user.id);
 
+        // Grant 3 days free trial with all features
+        const trialEnd = new Date();
+        trialEnd.setDate(trialEnd.getDate() + 3);
+
         const { error: updateError } = await supabase
           .from('subscriptions')
-          .update({ plan })
+          .update({ 
+            plan: 'basic',
+            status: 'active',
+            current_period_end: trialEnd.toISOString()
+          })
           .eq('user_id', data.user.id);
 
         if (updateError) {
