@@ -658,7 +658,20 @@ const Index = () => {
     if (filteredElements.length === 0) return;
 
     // Draw relations
-    filteredElements.filter(e => e.type === 'relation').forEach(rel => {
+    const relations = filteredElements.filter(e => e.type === 'relation');
+    
+    // Mapear múltiplas relações entre os mesmos elementos
+    const relationCountMap = new Map<string, number>();
+    const relationIndexMap = new Map<string, number>();
+    
+    relations.forEach(rel => {
+      if (rel.relationType !== 'children') {
+        const key = [rel.from, rel.to].sort().join('-');
+        relationCountMap.set(key, (relationCountMap.get(key) || 0) + 1);
+      }
+    });
+    
+    relations.forEach(rel => {
       const from = filteredElements.find(e => e.id === rel.from);
       const to = filteredElements.find(e => e.id === rel.to);
       
@@ -799,20 +812,47 @@ const Index = () => {
       }
       
       if (from && to) {
-        const midX = (from.x + to.x) / 2;
-        const midY = (from.y + to.y) / 2;
+        // Calcular offset para múltiplas relações
+        const key = [rel.from, rel.to].sort().join('-');
+        const totalRelations = relationCountMap.get(key) || 1;
+        
+        if (!relationIndexMap.has(key)) {
+          relationIndexMap.set(key, 0);
+        }
+        const currentIndex = relationIndexMap.get(key)!;
+        relationIndexMap.set(key, currentIndex + 1);
+        
+        // Calcular offset perpendicular à linha
+        const dx = to.x - from.x;
+        const dy = to.y - from.y;
+        const length = Math.sqrt(dx * dx + dy * dy);
+        const perpX = -dy / length;
+        const perpY = dx / length;
+        
+        // Offset baseado no índice e total de relações
+        const spacing = 8;
+        const totalOffset = (totalRelations - 1) * spacing;
+        const offset = (currentIndex * spacing - totalOffset / 2);
+        
+        const fromX = from.x + perpX * offset;
+        const fromY = from.y + perpY * offset;
+        const toX = to.x + perpX * offset;
+        const toY = to.y + perpY * offset;
+        
+        const midX = (fromX + toX) / 2;
+        const midY = (fromY + toY) / 2;
         
         ctx.beginPath();
-        ctx.moveTo(from.x, from.y);
+        ctx.moveTo(fromX, fromY);
         
         if (rel.relationType === 'marriage') {
           ctx.strokeStyle = '#4ade80';
           ctx.lineWidth = 3;
-          ctx.lineTo(to.x, to.y);
+          ctx.lineTo(toX, toY);
         } else if (rel.relationType === 'divorce') {
           ctx.strokeStyle = '#ef4444';
           ctx.lineWidth = 2;
-          ctx.lineTo(to.x, to.y);
+          ctx.lineTo(toX, toY);
           ctx.stroke();
           // Duas barras no meio
           ctx.beginPath();
@@ -823,17 +863,19 @@ const Index = () => {
         } else if (rel.relationType === 'separation') {
           ctx.strokeStyle = '#ef4444';
           ctx.lineWidth = 2;
-          ctx.lineTo(to.x, to.y);
+          ctx.lineTo(toX, toY);
           ctx.stroke();
-          // Uma barra no meio
+          // Duas barras no meio (igual ao divórcio)
           ctx.beginPath();
-          ctx.moveTo(midX, midY - 10);
-          ctx.lineTo(midX, midY + 10);
+          ctx.moveTo(midX - 5, midY - 10);
+          ctx.lineTo(midX - 5, midY + 10);
+          ctx.moveTo(midX + 5, midY - 10);
+          ctx.lineTo(midX + 5, midY + 10);
         } else if (rel.relationType === 'back-together') {
           // Voltaram a morar juntos após separação
           ctx.strokeStyle = '#4ade80';
           ctx.lineWidth = 2;
-          ctx.lineTo(to.x, to.y);
+          ctx.lineTo(toX, toY);
           ctx.stroke();
           // Uma barra no meio (indicando que houve separação)
           ctx.beginPath();
@@ -845,12 +887,12 @@ const Index = () => {
           ctx.strokeStyle = '#4ade80';
           ctx.lineWidth = 2;
           ctx.setLineDash([5, 5]);
-          ctx.lineTo(to.x, to.y);
+          ctx.lineTo(toX, toY);
         } else if (rel.relationType === 'distant') {
           ctx.strokeStyle = '#94a3b8';
           ctx.lineWidth = 1;
           ctx.setLineDash([8, 8]);
-          ctx.lineTo(to.x, to.y);
+          ctx.lineTo(toX, toY);
         } else if (rel.relationType === 'conflict') {
           ctx.strokeStyle = '#f59e0b';
           ctx.lineWidth = 2;
@@ -859,19 +901,19 @@ const Index = () => {
           const amplitude = 8;
           for (let i = 0; i <= segments; i++) {
             const t = i / segments;
-            const x = from.x + (to.x - from.x) * t;
-            const y = from.y + (to.y - from.y) * t;
-            const offset = Math.sin(t * Math.PI * 4) * amplitude;
-            const angle = Math.atan2(to.y - from.y, to.x - from.x);
-            const perpX = x - Math.sin(angle) * offset;
-            const perpY = y + Math.cos(angle) * offset;
-            if (i === 0) ctx.moveTo(perpX, perpY);
-            else ctx.lineTo(perpX, perpY);
+            const x = fromX + (toX - fromX) * t;
+            const y = fromY + (toY - fromY) * t;
+            const waveOffset = Math.sin(t * Math.PI * 4) * amplitude;
+            const angle = Math.atan2(toY - fromY, toX - fromX);
+            const perpWaveX = x - Math.sin(angle) * waveOffset;
+            const perpWaveY = y + Math.cos(angle) * waveOffset;
+            if (i === 0) ctx.moveTo(perpWaveX, perpWaveY);
+            else ctx.lineTo(perpWaveX, perpWaveY);
           }
         } else if (rel.relationType === 'breakup') {
           ctx.strokeStyle = '#ef4444';
           ctx.lineWidth = 3;
-          ctx.lineTo(to.x, to.y);
+          ctx.lineTo(toX, toY);
           ctx.stroke();
           // Múltiplas barras
           ctx.beginPath();
@@ -883,13 +925,13 @@ const Index = () => {
           ctx.strokeStyle = '#8b5cf6';
           ctx.lineWidth = 2;
           // Três linhas paralelas
-          for (let offset = -3; offset <= 3; offset += 3) {
+          for (let parallelOffset = -3; parallelOffset <= 3; parallelOffset += 3) {
             ctx.beginPath();
-            const angle = Math.atan2(to.y - from.y, to.x - from.x);
-            const perpX = -Math.sin(angle) * offset;
-            const perpY = Math.cos(angle) * offset;
-            ctx.moveTo(from.x + perpX, from.y + perpY);
-            ctx.lineTo(to.x + perpX, to.y + perpY);
+            const angle = Math.atan2(toY - fromY, toX - fromX);
+            const perpParallelX = -Math.sin(angle) * parallelOffset;
+            const perpParallelY = Math.cos(angle) * parallelOffset;
+            ctx.moveTo(fromX + perpParallelX, fromY + perpParallelY);
+            ctx.lineTo(toX + perpParallelX, toY + perpParallelY);
             ctx.stroke();
           }
           ctx.beginPath();
@@ -897,20 +939,20 @@ const Index = () => {
           ctx.strokeStyle = '#f59e0b';
           ctx.lineWidth = 2;
           // Três linhas onduladas
-          for (let offset = -3; offset <= 3; offset += 3) {
+          for (let parallelOffset = -3; parallelOffset <= 3; parallelOffset += 3) {
             ctx.beginPath();
             const segments = 8;
             const amplitude = 6;
             for (let i = 0; i <= segments; i++) {
               const t = i / segments;
-              const x = from.x + (to.x - from.x) * t;
-              const y = from.y + (to.y - from.y) * t;
+              const x = fromX + (toX - fromX) * t;
+              const y = fromY + (toY - fromY) * t;
               const waveOffset = Math.sin(t * Math.PI * 4) * amplitude;
-              const angle = Math.atan2(to.y - from.y, to.x - from.x);
-              const perpX = x - Math.sin(angle) * (waveOffset + offset);
-              const perpY = y + Math.cos(angle) * (waveOffset + offset);
-              if (i === 0) ctx.moveTo(perpX, perpY);
-              else ctx.lineTo(perpX, perpY);
+              const angle = Math.atan2(toY - fromY, toX - fromX);
+              const perpWaveX = x - Math.sin(angle) * (waveOffset + parallelOffset);
+              const perpWaveY = y + Math.cos(angle) * (waveOffset + parallelOffset);
+              if (i === 0) ctx.moveTo(perpWaveX, perpWaveY);
+              else ctx.lineTo(perpWaveX, perpWaveY);
             }
             ctx.stroke();
           }
@@ -919,38 +961,38 @@ const Index = () => {
           ctx.strokeStyle = '#3b82f6';
           ctx.lineWidth = 2;
           // Duas linhas paralelas
-          const angle = Math.atan2(to.y - from.y, to.x - from.x);
-          for (let offset = -2; offset <= 2; offset += 4) {
+          const angle = Math.atan2(toY - fromY, toX - fromX);
+          for (let parallelOffset = -2; parallelOffset <= 2; parallelOffset += 4) {
             ctx.beginPath();
-            const perpX = -Math.sin(angle) * offset;
-            const perpY = Math.cos(angle) * offset;
-            ctx.moveTo(from.x + perpX, from.y + perpY);
-            ctx.lineTo(to.x + perpX, to.y + perpY);
+            const perpParallelX = -Math.sin(angle) * parallelOffset;
+            const perpParallelY = Math.cos(angle) * parallelOffset;
+            ctx.moveTo(fromX + perpParallelX, fromY + perpParallelY);
+            ctx.lineTo(toX + perpParallelX, toY + perpParallelY);
             ctx.stroke();
           }
           ctx.beginPath();
         } else if (rel.relationType === 'harmonic') {
           ctx.strokeStyle = '#10b981';
           ctx.lineWidth = 2;
-          ctx.lineTo(to.x, to.y);
+          ctx.lineTo(toX, toY);
           ctx.stroke();
           // Setas duplas
-          const angle = Math.atan2(to.y - from.y, to.x - from.x);
+          const angle = Math.atan2(toY - fromY, toX - fromX);
           // Seta para 'to'
           ctx.beginPath();
-          ctx.moveTo(to.x, to.y);
-          ctx.lineTo(to.x - 10 * Math.cos(angle - Math.PI / 6), to.y - 10 * Math.sin(angle - Math.PI / 6));
-          ctx.moveTo(to.x, to.y);
-          ctx.lineTo(to.x - 10 * Math.cos(angle + Math.PI / 6), to.y - 10 * Math.sin(angle + Math.PI / 6));
+          ctx.moveTo(toX, toY);
+          ctx.lineTo(toX - 10 * Math.cos(angle - Math.PI / 6), toY - 10 * Math.sin(angle - Math.PI / 6));
+          ctx.moveTo(toX, toY);
+          ctx.lineTo(toX - 10 * Math.cos(angle + Math.PI / 6), toY - 10 * Math.sin(angle + Math.PI / 6));
           // Seta para 'from'
-          ctx.moveTo(from.x, from.y);
-          ctx.lineTo(from.x + 10 * Math.cos(angle - Math.PI / 6), from.y + 10 * Math.sin(angle - Math.PI / 6));
-          ctx.moveTo(from.x, from.y);
-          ctx.lineTo(from.x + 10 * Math.cos(angle + Math.PI / 6), from.y + 10 * Math.sin(angle + Math.PI / 6));
+          ctx.moveTo(fromX, fromY);
+          ctx.lineTo(fromX + 10 * Math.cos(angle - Math.PI / 6), fromY + 10 * Math.sin(angle - Math.PI / 6));
+          ctx.moveTo(fromX, fromY);
+          ctx.lineTo(fromX + 10 * Math.cos(angle + Math.PI / 6), fromY + 10 * Math.sin(angle + Math.PI / 6));
         } else if (rel.relationType === 'vulnerable') {
           ctx.strokeStyle = '#f97316';
           ctx.lineWidth = 2;
-          ctx.lineTo(to.x, to.y);
+          ctx.lineTo(toX, toY);
           ctx.stroke();
           // Círculo no meio
           ctx.beginPath();
@@ -961,21 +1003,21 @@ const Index = () => {
         } else if (rel.relationType === 'physical-abuse') {
           ctx.strokeStyle = '#991b1b';
           ctx.lineWidth = 3;
-          ctx.lineTo(to.x, to.y);
+          ctx.lineTo(toX, toY);
           ctx.stroke();
           // Linha com espinhos (triângulos ao longo da linha)
           ctx.beginPath();
           const numSpikes = 5;
           for (let i = 0; i <= numSpikes; i++) {
             const t = i / numSpikes;
-            const x = from.x + (to.x - from.x) * t;
-            const y = from.y + (to.y - from.y) * t;
-            const angle = Math.atan2(to.y - from.y, to.x - from.x);
+            const x = fromX + (toX - fromX) * t;
+            const y = fromY + (toY - fromY) * t;
+            const angle = Math.atan2(toY - fromY, toX - fromX);
             const spikeLength = 8;
-            const perpX = x - Math.sin(angle) * spikeLength;
-            const perpY = y + Math.cos(angle) * spikeLength;
+            const perpSpikeX = x - Math.sin(angle) * spikeLength;
+            const perpSpikeY = y + Math.cos(angle) * spikeLength;
             ctx.moveTo(x, y);
-            ctx.lineTo(perpX, perpY);
+            ctx.lineTo(perpSpikeX, perpSpikeY);
           }
           ctx.strokeStyle = '#991b1b';
         } else if (rel.relationType === 'emotional-abuse') {
@@ -987,40 +1029,40 @@ const Index = () => {
           const amplitude = 5;
           for (let i = 0; i <= segments; i++) {
             const t = i / segments;
-            const x = from.x + (to.x - from.x) * t;
-            const y = from.y + (to.y - from.y) * t;
-            const offset = Math.sin(t * Math.PI * 6) * amplitude;
-            const angle = Math.atan2(to.y - from.y, to.x - from.x);
-            const perpX = x - Math.sin(angle) * offset;
-            const perpY = y + Math.cos(angle) * offset;
-            if (i === 0) ctx.moveTo(perpX, perpY);
-            else ctx.lineTo(perpX, perpY);
+            const x = fromX + (toX - fromX) * t;
+            const y = fromY + (toY - fromY) * t;
+            const waveOffset = Math.sin(t * Math.PI * 6) * amplitude;
+            const angle = Math.atan2(toY - fromY, toX - fromX);
+            const perpWaveX = x - Math.sin(angle) * waveOffset;
+            const perpWaveY = y + Math.cos(angle) * waveOffset;
+            if (i === 0) ctx.moveTo(perpWaveX, perpWaveY);
+            else ctx.lineTo(perpWaveX, perpWaveY);
           }
         } else if (rel.relationType === 'caregiver') {
           ctx.strokeStyle = '#0284c7';
           ctx.lineWidth = 2;
-          ctx.lineTo(to.x, to.y);
+          ctx.lineTo(toX, toY);
           ctx.stroke();
           // Seta apontando para o dependente (to)
-          const angle = Math.atan2(to.y - from.y, to.x - from.x);
+          const angle = Math.atan2(toY - fromY, toX - fromX);
           ctx.beginPath();
-          ctx.moveTo(to.x, to.y);
-          ctx.lineTo(to.x - 15 * Math.cos(angle - Math.PI / 6), to.y - 15 * Math.sin(angle - Math.PI / 6));
-          ctx.moveTo(to.x, to.y);
-          ctx.lineTo(to.x - 15 * Math.cos(angle + Math.PI / 6), to.y - 15 * Math.sin(angle + Math.PI / 6));
+          ctx.moveTo(toX, toY);
+          ctx.lineTo(toX - 15 * Math.cos(angle - Math.PI / 6), toY - 15 * Math.sin(angle - Math.PI / 6));
+          ctx.moveTo(toX, toY);
+          ctx.lineTo(toX - 15 * Math.cos(angle + Math.PI / 6), toY - 15 * Math.sin(angle + Math.PI / 6));
           ctx.strokeStyle = '#0284c7';
         } else if (rel.relationType === 'hostility') {
           ctx.strokeStyle = '#dc2626';
           ctx.lineWidth = 3;
           // Linha com X's ao longo
-          ctx.lineTo(to.x, to.y);
+          ctx.lineTo(toX, toY);
           ctx.stroke();
           ctx.beginPath();
           const numX = 4;
           for (let i = 1; i < numX; i++) {
             const t = i / numX;
-            const x = from.x + (to.x - from.x) * t;
-            const y = from.y + (to.y - from.y) * t;
+            const x = fromX + (toX - fromX) * t;
+            const y = fromY + (toY - fromY) * t;
             const size = 6;
             ctx.moveTo(x - size, y - size);
             ctx.lineTo(x + size, y + size);
@@ -1032,14 +1074,14 @@ const Index = () => {
           ctx.strokeStyle = '#4f46e5';
           
           // Setas de pressão psicológica
-          const manipArrowAngle = Math.atan2(to.y - from.y, to.x - from.x);
-          const manipArrowDist = Math.sqrt(Math.pow(to.x - from.x, 2) + Math.pow(to.y - from.y, 2));
-          const manipMidX = from.x + (manipArrowDist / 2) * Math.cos(manipArrowAngle);
-          const manipMidY = from.y + (manipArrowDist / 2) * Math.sin(manipArrowAngle);
+          const manipArrowAngle = Math.atan2(toY - fromY, toX - fromX);
+          const manipArrowDist = Math.sqrt(Math.pow(toX - fromX, 2) + Math.pow(toY - fromY, 2));
+          const manipMidX = fromX + (manipArrowDist / 2) * Math.cos(manipArrowAngle);
+          const manipMidY = fromY + (manipArrowDist / 2) * Math.sin(manipArrowAngle);
           
           // Seta principal
-          ctx.moveTo(from.x, from.y);
-          ctx.lineTo(to.x, to.y);
+          ctx.moveTo(fromX, fromY);
+          ctx.lineTo(toX, toY);
           ctx.stroke();
           
           // Desenhar seta na direção do manipulado
@@ -1061,22 +1103,22 @@ const Index = () => {
           for (let i = 0; i <= 100; i++) {
             const t = i / 100;
             const spiralT = t * spirals * Math.PI * 2;
-            const x = from.x + (to.x - from.x) * t;
-            const y = from.y + (to.y - from.y) * t;
-            const angle = Math.atan2(to.y - from.y, to.x - from.x);
+            const x = fromX + (toX - fromX) * t;
+            const y = fromY + (toY - fromY) * t;
+            const angle = Math.atan2(toY - fromY, toX - fromX);
             const r = radius * (1 - t);
-            const offsetX = r * Math.cos(spiralT);
-            const offsetY = r * Math.sin(spiralT);
-            const perpX = x - Math.sin(angle) * offsetY + Math.cos(angle) * offsetX;
-            const perpY = y + Math.cos(angle) * offsetY + Math.sin(angle) * offsetX;
-            if (i === 0) ctx.moveTo(perpX, perpY);
-            else ctx.lineTo(perpX, perpY);
+            const offsetSpiralX = r * Math.cos(spiralT);
+            const offsetSpiralY = r * Math.sin(spiralT);
+            const perpSpiralX = x - Math.sin(angle) * offsetSpiralY + Math.cos(angle) * offsetSpiralX;
+            const perpSpiralY = y + Math.cos(angle) * offsetSpiralY + Math.sin(angle) * offsetSpiralX;
+            if (i === 0) ctx.moveTo(perpSpiralX, perpSpiralY);
+            else ctx.lineTo(perpSpiralX, perpSpiralY);
           }
         } else if (rel.relationType === 'siblings') {
           ctx.strokeStyle = '#3b82f6'; // Cor azul para irmãos
           ctx.lineWidth = 2;
-          ctx.moveTo(from.x, from.y);
-          ctx.lineTo(to.x, to.y);
+          ctx.moveTo(fromX, fromY);
+          ctx.lineTo(toX, toY);
         }
         
         ctx.stroke();
