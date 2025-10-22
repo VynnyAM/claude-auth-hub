@@ -138,27 +138,33 @@ export const FamilyExpertChat = ({ onGenerateGenogram, isButton = false }: Famil
         r.type.includes('casamento') || 
         r.type.includes('separação') ||
         r.type.includes('divórcio') ||
-        r.type.includes('divorciado')
+        r.type.includes('divorciado') ||
+        r.type.includes('separado')
       );
       
       let relationType = 'marriage';
+      let isSeparated = false;
+      
       if (parentsRelation) {
         if (parentsRelation.type.includes('separação') || parentsRelation.type.includes('separado')) {
-          relationType = 'separation';
+          isSeparated = true;
         } else if (parentsRelation.type.includes('divórcio') || parentsRelation.type.includes('divorciado')) {
-          relationType = 'divorce';
+          isSeparated = true;
         }
       }
       
-      elements.push({
-        id: baseId + idCounter++,
-        type: 'relation',
-        relationType,
-        from: fatherId,
-        to: motherId,
-        x: 0,
-        y: 0
-      });
+      // REGRA: Pais separados NÃO devem ter linha de casamento entre eles
+      if (!isSeparated) {
+        elements.push({
+          id: baseId + idCounter++,
+          type: 'relation',
+          relationType,
+          from: fatherId,
+          to: motherId,
+          x: 0,
+          y: 0
+        });
+      }
       
       // Relação com filhos
       if (childIds.length > 0) {
