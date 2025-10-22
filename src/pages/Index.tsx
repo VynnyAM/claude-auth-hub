@@ -818,10 +818,12 @@ const Index = () => {
           ctx.lineWidth = 2;
           ctx.lineTo(to.x, to.y);
           ctx.stroke();
-          // Uma barra no meio
+          // Duas barras no meio (igual ao divórcio)
           ctx.beginPath();
-          ctx.moveTo(midX, midY - 10);
-          ctx.lineTo(midX, midY + 10);
+          ctx.moveTo(midX - 5, midY - 10);
+          ctx.lineTo(midX - 5, midY + 10);
+          ctx.moveTo(midX + 5, midY - 10);
+          ctx.lineTo(midX + 5, midY + 10);
         } else if (rel.relationType === 'back-together') {
           // Voltaram a morar juntos após separação
           ctx.strokeStyle = '#4ade80';
