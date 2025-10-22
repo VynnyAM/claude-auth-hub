@@ -1543,12 +1543,38 @@ const Index = () => {
         format: [tempCanvas.width, tempCanvas.height]
       });
       
+      // Adicionar imagem do genograma
       pdf.addImage(imgData, 'PNG', 0, 0, tempCanvas.width, tempCanvas.height);
+      
+      // Se houver notas, adicionar em nova página
+      if (notes && notes.trim()) {
+        pdf.addPage('a4', 'portrait');
+        
+        // Adicionar título
+        pdf.setFontSize(16);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('Notas e Brainstorming', 20, 30);
+        
+        // Adicionar notas
+        pdf.setFontSize(11);
+        pdf.setFont('helvetica', 'normal');
+        
+        // Quebrar texto em linhas para caber na página
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const margins = { left: 20, right: 20, top: 50, bottom: 20 };
+        const maxWidth = pageWidth - margins.left - margins.right;
+        
+        const lines = pdf.splitTextToSize(notes, maxWidth);
+        pdf.text(lines, margins.left, margins.top);
+      }
+      
       pdf.save('genograma-familiar.pdf');
       
       toast({
         title: "PDF baixado!",
-        description: "O genograma foi baixado com sucesso.",
+        description: notes && notes.trim() 
+          ? "Genograma e notas baixados com sucesso." 
+          : "O genograma foi baixado com sucesso.",
       });
     });
   };
