@@ -181,34 +181,7 @@ export const FamilyExpertChat = ({ onGenerateGenogram, isButton = false }: Famil
       }
     }
     
-    // Adicionar relações entre irmãos se mencionadas
-    const siblingRelations = familyData.relations.filter(r => 
-      r.type.includes('distante') || 
-      r.type.includes('próximo') ||
-      r.type.includes('conflito')
-    );
-    
-    siblingRelations.forEach(rel => {
-      if (childIds.length >= 2) {
-        let relType = 'distant';
-        if (rel.type.includes('próximo') || rel.type.includes('proximo')) {
-          relType = 'very-close';
-        } else if (rel.type.includes('conflito')) {
-          relType = 'conflict';
-        }
-        
-        // Criar relação entre primeiro e segundo filho como exemplo
-        elements.push({
-          id: baseId + idCounter++,
-          type: 'relation',
-          relationType: relType,
-          from: childIds[0],
-          to: childIds[1],
-          x: 0,
-          y: 0
-        });
-      }
-    });
+    // REGRA: Relações entre irmãos foram removidas - não criar automaticamente
     
     return elements;
   };
