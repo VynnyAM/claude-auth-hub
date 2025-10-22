@@ -89,7 +89,9 @@ const Index = () => {
     }
   }, [user, authLoading, navigate]);
 
-  // Check if user is in trial period
+  // Check if user is in trial period and if trial is expired
+  const [isTrialExpired, setIsTrialExpired] = useState(false);
+
   useEffect(() => {
     const checkTrialStatus = async () => {
       if (user && subscription) {
@@ -107,6 +109,17 @@ const Index = () => {
           
           // Check if user is within 3 days of creation and subscription is still active
           setIsTrialActive(daysSinceCreation <= 3 && endDate > now);
+          
+          // Check if trial expired (more than 3 days AND subscription not active)
+          setIsTrialExpired(daysSinceCreation > 3 && subData.status !== 'active');
+        } else {
+          // No active subscription found
+          if (user.created_at) {
+            const createdAt = new Date(user.created_at);
+            const now = new Date();
+            const daysSinceCreation = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24);
+            setIsTrialExpired(daysSinceCreation > 3);
+          }
         }
       }
     };
@@ -1623,7 +1636,7 @@ const Index = () => {
                   className="w-full"
                   variant="outline"
                   size="sm"
-                  disabled={!canCreateMultiple}
+                  disabled={!canCreateMultiple || isTrialExpired}
                 >
                   {!canCreateMultiple ? <Lock className="w-4 h-4 mr-2" /> : <Plus className="w-4 h-4 mr-2" />}
                   Novo Genograma
@@ -1633,7 +1646,7 @@ const Index = () => {
                   className="w-full"
                   variant="outline"
                   size="sm"
-                  disabled={genogramLoading || !canSaveLoad}
+                  disabled={genogramLoading || !canSaveLoad || isTrialExpired}
                 >
                   {!canSaveLoad && <Lock className="w-4 h-4 mr-2" />}
                   {canSaveLoad && <Save className="w-4 h-4 mr-2" />}
@@ -1644,7 +1657,7 @@ const Index = () => {
                   className="w-full"
                   variant="outline"
                   size="sm"
-                  disabled={!canSaveLoad}
+                  disabled={!canSaveLoad || isTrialExpired}
                 >
                   {!canSaveLoad && <Lock className="w-4 h-4 mr-2" />}
                   {canSaveLoad && <FolderOpen className="w-4 h-4 mr-2" />}
@@ -1655,6 +1668,7 @@ const Index = () => {
                   className="w-full bg-muted/50 hover:bg-muted border-muted-foreground/30"
                   variant="outline"
                   size="sm"
+                  disabled={isTrialExpired}
                 >
                   <Trash2 className="w-4 h-4 mr-2" />
                   Limpar Tela
@@ -1664,6 +1678,7 @@ const Index = () => {
                   className="w-full"
                   variant="outline"
                   size="sm"
+                  disabled={isTrialExpired}
                 >
                   <BookOpen className="w-4 h-4 mr-2" />
                   Templates
@@ -1679,6 +1694,7 @@ const Index = () => {
                   className="w-full bg-blue-500/10 hover:bg-blue-500/20 border-blue-500/30 text-blue-700"
                   variant="outline"
                   size="sm"
+                  disabled={isTrialExpired}
                 >
                   ⬜ Masculino
                 </Button>
@@ -1687,6 +1703,7 @@ const Index = () => {
                   className="w-full bg-pink-500/10 hover:bg-pink-500/20 border-pink-500/30 text-pink-700"
                   variant="outline"
                   size="sm"
+                  disabled={isTrialExpired}
                 >
                   ⚪ Feminino
                 </Button>
@@ -1695,6 +1712,7 @@ const Index = () => {
                   className="w-full bg-amber-500/10 hover:bg-amber-500/20 border-amber-500/30 text-amber-700"
                   variant="outline"
                   size="sm"
+                  disabled={isTrialExpired}
                 >
                   🔺 Gravidez
                 </Button>
@@ -1703,6 +1721,7 @@ const Index = () => {
                   className="w-full bg-gray-500/10 hover:bg-gray-500/20 border-gray-500/30 text-gray-700"
                   variant="outline"
                   size="sm"
+                  disabled={isTrialExpired}
                 >
                   🔻 Sexo Indefinido
                 </Button>
@@ -1711,6 +1730,7 @@ const Index = () => {
                   className="w-full bg-cyan-500/10 hover:bg-cyan-500/20 border-cyan-500/30 text-cyan-700"
                   variant="outline"
                   size="sm"
+                  disabled={isTrialExpired}
                 >
                   👥 Gêmeos Fraternos
                 </Button>
@@ -1719,6 +1739,7 @@ const Index = () => {
                   className="w-full bg-cyan-600/10 hover:bg-cyan-600/20 border-cyan-600/30 text-cyan-800"
                   variant="outline"
                   size="sm"
+                  disabled={isTrialExpired}
                 >
                   👯 Gêmeos Idênticos
                 </Button>
@@ -1727,6 +1748,7 @@ const Index = () => {
                   className="w-full bg-emerald-500/10 hover:bg-emerald-500/20 border-emerald-500/30 text-emerald-700"
                   variant="outline"
                   size="sm"
+                  disabled={isTrialExpired}
                 >
                   🐾 Animal de Estimação
                 </Button>
@@ -1741,6 +1763,7 @@ const Index = () => {
                   className="w-full bg-green-500/10 hover:bg-green-500/20 border-green-500/30 text-green-700"
                   variant="outline"
                   size="sm"
+                  disabled={isTrialExpired}
                 >
                   Filhos (2 pais + filhos)
                 </Button>
@@ -1749,6 +1772,7 @@ const Index = () => {
                   className="w-full bg-emerald-500/10 hover:bg-emerald-500/20 border-emerald-500/30 text-emerald-700"
                   variant="outline"
                   size="sm"
+                  disabled={isTrialExpired}
                 >
                   Casamento
                 </Button>
@@ -1757,6 +1781,7 @@ const Index = () => {
                   className="w-full bg-red-500/10 hover:bg-red-500/20 border-red-500/30 text-red-700"
                   variant="outline"
                   size="sm"
+                  disabled={isTrialExpired}
                 >
                   Divórcio
                 </Button>
@@ -1765,6 +1790,7 @@ const Index = () => {
                   className="w-full bg-orange-500/10 hover:bg-orange-500/20 border-orange-500/30 text-orange-700"
                   variant="outline"
                   size="sm"
+                  disabled={isTrialExpired}
                 >
                   Separação Conjugal
                 </Button>
@@ -1773,6 +1799,7 @@ const Index = () => {
                   className="w-full bg-emerald-400/10 hover:bg-emerald-400/20 border-emerald-400/30 text-emerald-600"
                   variant="outline"
                   size="sm"
+                  disabled={isTrialExpired}
                 >
                   Voltaram Juntos
                 </Button>
@@ -1781,6 +1808,7 @@ const Index = () => {
                   className="w-full bg-teal-500/10 hover:bg-teal-500/20 border-teal-500/30 text-teal-700"
                   variant="outline"
                   size="sm"
+                  disabled={isTrialExpired}
                 >
                   Morando Junto
                 </Button>
@@ -1789,6 +1817,7 @@ const Index = () => {
                   className="w-full bg-gray-500/10 hover:bg-gray-500/20 border-gray-500/30 text-gray-700"
                   variant="outline"
                   size="sm"
+                  disabled={isTrialExpired}
                 >
                   Distante
                 </Button>
@@ -1797,6 +1826,7 @@ const Index = () => {
                   className="w-full bg-amber-500/10 hover:bg-amber-500/20 border-amber-500/30 text-amber-700"
                   variant="outline"
                   size="sm"
+                  disabled={isTrialExpired}
                 >
                   Conflituoso
                 </Button>
@@ -1805,6 +1835,7 @@ const Index = () => {
                   className="w-full bg-rose-500/10 hover:bg-rose-500/20 border-rose-500/30 text-rose-700"
                   variant="outline"
                   size="sm"
+                  disabled={isTrialExpired}
                 >
                   Rompimento
                 </Button>
@@ -1813,6 +1844,7 @@ const Index = () => {
                   className="w-full bg-purple-500/10 hover:bg-purple-500/20 border-purple-500/30 text-purple-700"
                   variant="outline"
                   size="sm"
+                  disabled={isTrialExpired}
                 >
                   Muito Estreito
                 </Button>
@@ -1821,6 +1853,7 @@ const Index = () => {
                   className="w-full bg-yellow-600/10 hover:bg-yellow-600/20 border-yellow-600/30 text-yellow-700"
                   variant="outline"
                   size="sm"
+                  disabled={isTrialExpired}
                 >
                   Fundido e Conflitual
                 </Button>
@@ -1829,6 +1862,7 @@ const Index = () => {
                   className="w-full bg-blue-500/10 hover:bg-blue-500/20 border-blue-500/30 text-blue-700"
                   variant="outline"
                   size="sm"
+                  disabled={isTrialExpired}
                 >
                   Aliança
                 </Button>
@@ -1837,6 +1871,7 @@ const Index = () => {
                   className="w-full bg-lime-500/10 hover:bg-lime-500/20 border-lime-500/30 text-lime-700"
                   variant="outline"
                   size="sm"
+                  disabled={isTrialExpired}
                 >
                   Harmônico
                 </Button>
@@ -1845,6 +1880,7 @@ const Index = () => {
                   className="w-full bg-orange-600/10 hover:bg-orange-600/20 border-orange-600/30 text-orange-700"
                   variant="outline"
                   size="sm"
+                  disabled={isTrialExpired}
                 >
                   Vulnerável
                 </Button>
@@ -1853,6 +1889,7 @@ const Index = () => {
                   className="w-full bg-red-700/10 hover:bg-red-700/20 border-red-700/30 text-red-800"
                   variant="outline"
                   size="sm"
+                  disabled={isTrialExpired}
                 >
                   Abuso Físico
                 </Button>
@@ -1861,6 +1898,7 @@ const Index = () => {
                   className="w-full bg-violet-700/10 hover:bg-violet-700/20 border-violet-700/30 text-violet-800"
                   variant="outline"
                   size="sm"
+                  disabled={isTrialExpired}
                 >
                   Abuso Emocional
                 </Button>
@@ -1869,6 +1907,7 @@ const Index = () => {
                   className="w-full bg-sky-500/10 hover:bg-sky-500/20 border-sky-500/30 text-sky-700"
                   variant="outline"
                   size="sm"
+                  disabled={isTrialExpired}
                 >
                   Cuidador/Dependente
                 </Button>
@@ -1877,6 +1916,7 @@ const Index = () => {
                   className="w-full bg-red-600/10 hover:bg-red-600/20 border-red-600/30 text-red-700"
                   variant="outline"
                   size="sm"
+                  disabled={isTrialExpired}
                 >
                   Hostilidade
                 </Button>
@@ -1885,6 +1925,7 @@ const Index = () => {
                   className="w-full bg-indigo-600/10 hover:bg-indigo-600/20 border-indigo-600/30 text-indigo-700"
                   variant="outline"
                   size="sm"
+                  disabled={isTrialExpired}
                 >
                   Manipulação
                 </Button>
