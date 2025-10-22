@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { MessageCircle, Send, X, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { GenogramElement } from '@/hooks/useGenogram';
@@ -342,14 +343,23 @@ export const FamilyExpertChat = ({ onGenerateGenogram, isButton = false, current
 
   if (!isOpen) {
     return (
-      <Button
-        onClick={() => setIsOpen(true)}
-        className={isButton ? "w-full" : "fixed bottom-6 left-6 shadow-lg"}
-        variant={isButton ? "default" : "default"}
-      >
-        <MessageCircle className="w-5 h-5 mr-2" />
-        Descreva sua família
-      </Button>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              disabled
+              className={isButton ? "w-full" : "fixed bottom-6 left-6 shadow-lg"}
+              variant="secondary"
+            >
+              <MessageCircle className="w-5 h-5 mr-2" />
+              Descreva sua família
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Funcionalidade em manutenção</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
     );
   }
 
