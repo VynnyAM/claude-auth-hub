@@ -27,6 +27,12 @@ serve(async (req) => {
 
 Sua função é interpretar o texto enviado pelo usuário e gerar uma estrutura de dados com as pessoas e suas relações familiares.
 
+IMPORTANTE: Este é um chat com MEMÓRIA. O usuário pode enviar mensagens sequenciais para CONTINUAR construindo o genograma. 
+- Na PRIMEIRA mensagem, ele descreve a família base (ex: "Sou filha de pais separados")
+- Nas mensagens SEGUINTES, ele expande (ex: "Depois eu casei e tive uma filha")
+- Você deve identificar APENAS as NOVAS pessoas e relações mencionadas na mensagem atual
+- Considere o contexto das mensagens anteriores para entender quem é quem
+
 REGRAS OBRIGATÓRIAS:
 1. Identifique as pessoas citadas e relacione-as corretamente (pais, filhos, irmãos, avós etc.).
 2. Sempre inclua o campo "type" nas relações, indicando o tipo correto de relação.

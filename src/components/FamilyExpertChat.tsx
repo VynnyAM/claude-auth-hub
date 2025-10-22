@@ -28,9 +28,10 @@ interface FamilyData {
 interface FamilyExpertChatProps {
   onGenerateGenogram: (elements: GenogramElement[]) => void;
   isButton?: boolean;
+  currentElements?: GenogramElement[];
 }
 
-export const FamilyExpertChat = ({ onGenerateGenogram, isButton = false }: FamilyExpertChatProps) => {
+export const FamilyExpertChat = ({ onGenerateGenogram, isButton = false, currentElements = [] }: FamilyExpertChatProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -297,17 +298,23 @@ export const FamilyExpertChat = ({ onGenerateGenogram, isButton = false }: Famil
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       if (familyData && familyData.members.length > 0) {
-        // Gerar genograma
-        const elements = generateGenogramFromData(familyData);
-        onGenerateGenogram(elements);
+        // Gerar novos elementos do genograma
+        const newElements = generateGenogramFromData(familyData);
+        
+        // Mesclar com elementos existentes
+        const allElements = [...currentElements, ...newElements];
+        onGenerateGenogram(allElements);
         
         toast({
-          title: "Genograma criado!",
-          description: "A estrutura familiar foi gerada com base nas informações fornecidas.",
+          title: messages.length > 2 ? "Genograma atualizado!" : "Genograma criado!",
+          description: messages.length > 2 
+            ? "A estrutura familiar foi expandida com as novas informações."
+            : "A estrutura familiar foi gerada com base nas informações fornecidas.",
         });
         
-        setIsOpen(false);
-        setMessages([]);
+        // Não fecha mais o chat e não limpa mensagens
+        // setIsOpen(false);
+        // setMessages([]);
       } else {
         toast({
           title: "Informações insuficientes",
@@ -373,6 +380,9 @@ export const FamilyExpertChat = ({ onGenerateGenogram, isButton = false }: Famil
             <p className="text-sm">Descreva sua família e vou criar o genograma para você.</p>
             <p className="text-xs mt-4 text-muted-foreground">
               Exemplo: "Tenho um pai chamado José de 50 anos e mãe Maria de 48 anos. Meus pais são separados."
+            </p>
+            <p className="text-xs mt-2 text-muted-foreground font-medium">
+              💡 Dica: Continue descrevendo para expandir o genograma!
             </p>
           </div>
         )}

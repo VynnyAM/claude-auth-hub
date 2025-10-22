@@ -1670,7 +1670,8 @@ const Index = () => {
                   setElements(newElements);
                   setSelectedElement(null);
                 }} 
-                isButton={true} 
+                isButton={true}
+                currentElements={elements}
               />
             </div>
 
