@@ -1591,7 +1591,7 @@ const Index = () => {
             >
               <CreditCard className="w-5 h-5 mr-2" />
               {isTrialActive 
-                ? "Teste grátis de 3 dias do Plano Básico ao criar sua conta" 
+                ? "Teste grátis de 3 dias ao criar sua conta!" 
                 : "Verifique aqui suas opções de assinatura"
               }
             </Button>
