@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { LogOut, Download, Trash2, Users, Save, FolderOpen, Plus, Lock, CreditCard, Check, X, BookOpen, Search, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -44,6 +45,8 @@ const Index = () => {
     currentGenogramId, 
     elements, 
     setElements, 
+    notes,
+    setNotes,
     loading: genogramLoading,
     loadGenogram,
     saveGenogram,
@@ -1562,7 +1565,7 @@ const Index = () => {
       return;
     }
     
-    await saveGenogram(genogramTitle);
+    await saveGenogram(genogramTitle, notes);
     setShowSaveModal(false);
   };
 
@@ -2019,7 +2022,7 @@ const Index = () => {
             </div>
           </div>
 
-          <div className="flex-1">
+          <div className="flex-1 flex flex-col gap-4">
             <div className="bg-card rounded-xl shadow-md p-4">
               <canvas
                 ref={canvasRef}
@@ -2032,6 +2035,22 @@ const Index = () => {
                 className="border border-border rounded-lg cursor-crosshair w-full"
                 style={{ maxWidth: '100%', height: 'auto' }}
               />
+            </div>
+
+            <div className="bg-card rounded-xl shadow-md p-4">
+              <Label htmlFor="notes" className="text-sm font-medium mb-2 block">
+                Notas e Brainstorming
+              </Label>
+              <Textarea
+                id="notes"
+                placeholder="Digite suas anotações sobre o genograma, observações, padrões identificados..."
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                className="min-h-[120px] resize-y"
+              />
+              <p className="text-xs text-muted-foreground mt-2">
+                As notas serão salvas junto com o genograma
+              </p>
             </div>
           </div>
         </div>

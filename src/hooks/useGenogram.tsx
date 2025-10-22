@@ -25,6 +25,7 @@ export const useGenogram = (userId: string | undefined) => {
   const [genograms, setGenograms] = useState<any[]>([]);
   const [currentGenogramId, setCurrentGenogramId] = useState<string | null>(null);
   const [elements, setElements] = useState<GenogramElement[]>([]);
+  const [notes, setNotes] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
@@ -54,6 +55,16 @@ export const useGenogram = (userId: string | undefined) => {
   const loadGenogram = async (genogramId: string) => {
     setLoading(true);
     try {
+      // Load genogram with notes
+      const { data: genogramData, error: genogramError } = await supabase
+        .from('genograms')
+        .select('notes')
+        .eq('id', genogramId)
+        .single();
+
+      if (genogramError) throw genogramError;
+
+      // Load elements
       const { data, error } = await supabase
         .from('genogram_elements')
         .select('*')
@@ -63,6 +74,7 @@ export const useGenogram = (userId: string | undefined) => {
       
       const parsedElements = data?.map(item => item.element_data as unknown as GenogramElement) || [];
       setElements(parsedElements);
+      setNotes(genogramData?.notes || '');
       setCurrentGenogramId(genogramId);
     } catch (error: any) {
       toast({
@@ -76,7 +88,7 @@ export const useGenogram = (userId: string | undefined) => {
   };
 
   // Save genogram
-  const saveGenogram = async (title: string = 'Novo Genograma') => {
+  const saveGenogram = async (title: string = 'Novo Genograma', genogramNotes: string = '') => {
     if (!userId) return;
     
     setLoading(true);
@@ -87,7 +99,7 @@ export const useGenogram = (userId: string | undefined) => {
       if (!genogramId) {
         const { data, error } = await supabase
           .from('genograms')
-          .insert({ user_id: userId, title })
+          .insert({ user_id: userId, title, notes: genogramNotes })
           .select()
           .single();
 
@@ -97,7 +109,7 @@ export const useGenogram = (userId: string | undefined) => {
       } else {
         const { error } = await supabase
           .from('genograms')
-          .update({ title, updated_at: new Date().toISOString() })
+          .update({ title, notes: genogramNotes, updated_at: new Date().toISOString() })
           .eq('id', genogramId);
 
         if (error) throw error;
@@ -174,6 +186,7 @@ export const useGenogram = (userId: string | undefined) => {
   const createNewGenogram = () => {
     setCurrentGenogramId(null);
     setElements([]);
+    setNotes('');
   };
 
   useEffect(() => {
@@ -187,6 +200,8 @@ export const useGenogram = (userId: string | undefined) => {
     currentGenogramId,
     elements,
     setElements,
+    notes,
+    setNotes,
     loading,
     loadGenogram,
     saveGenogram,
