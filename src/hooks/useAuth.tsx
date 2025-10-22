@@ -123,12 +123,32 @@ export const useAuth = () => {
 
   const signIn = async (email: string, password: string) => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { error, data } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) throw error;
+
+      // Verificar se a subscription expirou
+      if (data.user) {
+        const { data: subscriptionData } = await supabase
+          .from('subscriptions')
+          .select('current_period_end')
+          .eq('user_id', data.user.id)
+          .single();
+
+        if (subscriptionData?.current_period_end) {
+          const expirationDate = new Date(subscriptionData.current_period_end);
+          const now = new Date();
+          
+          if (expirationDate < now) {
+            // Assinatura expirada - fazer logout
+            await supabase.auth.signOut();
+            return { error: { message: 'subscription_expired' } as any };
+          }
+        }
+      }
 
       toast({
         title: "Login realizado!",

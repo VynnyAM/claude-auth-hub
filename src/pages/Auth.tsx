@@ -1,9 +1,17 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, Heart, Lock, Mail, Phone } from 'lucide-react';
+import { Users, Heart, Lock, Mail, Phone, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -23,6 +31,9 @@ const Auth = () => {
     phone?: string;
   }>({});
   const [loadingContribution, setLoadingContribution] = useState(false);
+  const [subscriptionExpired, setSubscriptionExpired] = useState(false);
+  const [showPlansDialog, setShowPlansDialog] = useState(false);
+  const [subscribing, setSubscribing] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
   const { signIn, signUp, signInWithGoogle, user } = useAuth();
@@ -88,6 +99,13 @@ const Auth = () => {
         const { error } = await signIn(email, password);
         if (!error) {
           navigate('/');
+        } else if (error.message === 'subscription_expired') {
+          setSubscriptionExpired(true);
+          toast({
+            title: "Assinatura Expirada",
+            description: "Seu período de teste gratuito terminou. Escolha um plano para continuar.",
+            variant: "destructive",
+          });
         } else {
           toast({
             title: "Erro ao fazer login",
@@ -163,6 +181,28 @@ const Auth = () => {
     setLoadingContribution(false);
   };
 
+  const handleSubscribe = async (priceId: string) => {
+    setSubscribing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('create-checkout', {
+        body: { priceId }
+      });
+      
+      if (error) throw error;
+      
+      if (data?.url) {
+        window.location.href = data.url;
+      }
+    } catch (error: any) {
+      toast({
+        title: "Erro ao processar assinatura",
+        description: error.message || "Ocorreu um erro inesperado",
+        variant: "destructive",
+      });
+    }
+    setSubscribing(false);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-green-50 flex items-center justify-center py-8 px-4">
       <div className="max-w-6xl w-full mx-auto grid md:grid-cols-2 gap-8 items-center">
@@ -192,11 +232,26 @@ const Auth = () => {
             </p>
           </div>
           
-          <div className="bg-gradient-to-r from-primary/10 to-accent/10 rounded-lg p-4 border-2 border-primary/20">
-            <p className="text-primary font-medium text-center">
-              🎁 Teste grátis de 3 dias do Plano Básico ao criar sua conta!
-            </p>
-          </div>
+          {subscriptionExpired ? (
+            <div className="bg-gradient-to-r from-destructive/10 to-destructive/20 rounded-lg p-4 border-2 border-destructive/30">
+              <p className="text-destructive font-medium text-center mb-3">
+                ⚠️ Seu período de teste gratuito expirou!
+              </p>
+              <Button
+                onClick={() => setShowPlansDialog(true)}
+                className="w-full bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90"
+                size="lg"
+              >
+                🔓 Verifique aqui suas opções de assinatura
+              </Button>
+            </div>
+          ) : (
+            <div className="bg-gradient-to-r from-primary/10 to-accent/10 rounded-lg p-4 border-2 border-primary/20">
+              <p className="text-primary font-medium text-center">
+                🎁 Teste grátis de 3 dias do Plano Básico ao criar sua conta!
+              </p>
+            </div>
+          )}
           
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-3">
             <div className="flex items-start gap-3">
@@ -367,6 +422,110 @@ const Auth = () => {
           </div>
         </div>
       </div>
+
+      <Dialog open={showPlansDialog} onOpenChange={setShowPlansDialog}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl">Escolha seu Plano</DialogTitle>
+            <DialogDescription>
+              Selecione o plano ideal para suas necessidades profissionais
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid md:grid-cols-2 gap-6 py-4">
+            <div className="border-2 rounded-lg p-6 space-y-4 hover:border-primary transition-colors">
+              <div className="space-y-2">
+                <h3 className="text-xl font-semibold">Plano Mensal</h3>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-3xl font-bold">R$ 30</span>
+                  <span className="text-muted-foreground">/mês</span>
+                </div>
+              </div>
+              
+              <ul className="space-y-3">
+                <li className="flex items-start gap-2">
+                  <Check className="w-5 h-5 text-green-600 mt-0.5 shrink-0" />
+                  <span>Genogramas ilimitados</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check className="w-5 h-5 text-green-600 mt-0.5 shrink-0" />
+                  <span>Download em PDF</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check className="w-5 h-5 text-green-600 mt-0.5 shrink-0" />
+                  <span>Suporte prioritário</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check className="w-5 h-5 text-green-600 mt-0.5 shrink-0" />
+                  <span>Atualizações semanais</span>
+                </li>
+              </ul>
+
+              <Button
+                onClick={() => handleSubscribe('price_1SL7CkDr0uqPhV0MXBCGZQOf')}
+                disabled={subscribing}
+                className="w-full"
+                size="lg"
+              >
+                {subscribing ? 'Processando...' : 'Assinar Plano Mensal'}
+              </Button>
+            </div>
+
+            <div className="border-2 border-primary rounded-lg p-6 space-y-4 relative bg-primary/5">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground px-4 py-1 rounded-full text-sm font-medium">
+                Mais Vantajoso
+              </div>
+              
+              <div className="space-y-2">
+                <h3 className="text-xl font-semibold">Plano Anual</h3>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-3xl font-bold">R$ 300</span>
+                  <span className="text-muted-foreground">/ano</span>
+                </div>
+                <p className="text-sm text-green-600 font-medium">
+                  Economize R$ 60 (2 meses grátis)
+                </p>
+              </div>
+              
+              <ul className="space-y-3">
+                <li className="flex items-start gap-2">
+                  <Check className="w-5 h-5 text-green-600 mt-0.5 shrink-0" />
+                  <span>Genogramas ilimitados</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check className="w-5 h-5 text-green-600 mt-0.5 shrink-0" />
+                  <span>Download em PDF</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check className="w-5 h-5 text-green-600 mt-0.5 shrink-0" />
+                  <span>Suporte prioritário</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check className="w-5 h-5 text-green-600 mt-0.5 shrink-0" />
+                  <span>Atualizações semanais</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check className="w-5 h-5 text-green-600 mt-0.5 shrink-0" />
+                  <span className="font-medium">Acesso antecipado a novos recursos</span>
+                </li>
+              </ul>
+
+              <Button
+                onClick={() => handleSubscribe('price_1SL7EhDr0uqPhV0Mf9t9oF6G')}
+                disabled={subscribing}
+                className="w-full"
+                size="lg"
+              >
+                {subscribing ? 'Processando...' : 'Assinar Plano Anual'}
+              </Button>
+            </div>
+          </div>
+
+          <DialogFooter className="text-sm text-muted-foreground text-center">
+            <p>Pagamento seguro processado pelo Stripe. Cancele a qualquer momento.</p>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
