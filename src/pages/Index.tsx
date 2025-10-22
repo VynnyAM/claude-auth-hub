@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, Download, Trash2, Users, Save, FolderOpen, Plus, Lock, CreditCard, Check, X, BookOpen, Search, MessageSquare } from 'lucide-react';
+import { LogOut, Download, Trash2, Save, FolderOpen, Plus, Lock, CreditCard, Check, X, BookOpen, Search, MessageSquare, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -25,8 +25,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { useGenogram, GenogramElement } from '@/hooks/useGenogram';
 import { useSubscription } from '@/hooks/useSubscription';
 import { supabase } from '@/integrations/supabase/client';
-import { FamilyExpertChat } from '@/components/FamilyExpertChat';
 import { GenogramTemplates } from '@/components/GenogramTemplates';
+import { SupportTickets } from '@/components/SupportTickets';
 
 const PRICE_IDS = {
   monthly: 'price_1SL7CkDr0uqPhV0MXBCGZQOf',
@@ -63,6 +63,7 @@ const Index = () => {
   const [feedbackMessage, setFeedbackMessage] = useState('');
   const [feedbackEmail, setFeedbackEmail] = useState('');
   const [sendingFeedback, setSendingFeedback] = useState(false);
+  const [showSupportModal, setShowSupportModal] = useState(false);
   const [showQuickEditModal, setShowQuickEditModal] = useState(false);
   const [editingElement, setEditingElement] = useState<GenogramElement | null>(null);
   const [quickEditName, setQuickEditName] = useState('');
@@ -183,135 +184,6 @@ const Index = () => {
     setShowClearModal(false);
   };
 
-  const generateFamilyStructure = () => {
-    // ESTRUTURA HIERÁRQUICA AUTOMÁTICA DE GENOGRAMA
-    // Esta função cria uma família seguindo as convenções clássicas:
-    // - Quadrado = homem (pai, filhos)
-    // - Círculo = mulher (mãe, filhas)
-    // - Linha horizontal verde = casamento/união
-    // - Linhas verticais = conexão automática entre gerações
-    // 
-    // IMPORTANTE: As ligações são AUTOMÁTICAS e se adaptam quando os elementos são movidos.
-    // O sistema mantém automaticamente:
-    // 1. Linha horizontal do casamento entre pais
-    // 2. Linha vertical central descendo do casamento
-    // 3. Linha horizontal dos filhos (sempre conectada)
-    // 4. Linhas verticais individuais para cada filho
-    
-    // Define as posições base para a estrutura hierárquica
-    const centerX = 450; // Centro do canvas (900px / 2)
-    const parentY = 150; // Altura dos pais (geração superior)
-    const spacing = 120; // Espaçamento horizontal entre pai e mãe
-    const childrenY = 310; // Altura dos filhos (geração inferior) - 160px abaixo dos pais para manter 80px de distância da linha de casamento
-    const childSpacing = 100; // Espaçamento proporcional entre irmãos
-    
-    // Criar ID base único para todos os elementos da família
-    const baseId = Date.now();
-    
-    // GERAÇÃO 1: PAIS
-    // Criar o pai (quadrado - male) - posicionado à esquerda
-    const father: GenogramElement = {
-      id: baseId + 1,
-      type: 'male',
-      x: centerX - spacing / 2,
-      y: parentY,
-      name: 'Pai',
-      age: '',
-      status: 'alive'
-    };
-    
-    // Criar a mãe (círculo - female) - posicionada à direita
-    const mother: GenogramElement = {
-      id: baseId + 2,
-      type: 'female',
-      x: centerX + spacing / 2,
-      y: parentY,
-      name: 'Mãe',
-      age: '',
-      status: 'alive'
-    };
-    
-    // GERAÇÃO 2: FILHOS
-    // Criar filhos alinhados horizontalmente e centralizados em relação aos pais
-    // A posição vertical é calculada para manter 80px de distância da linha de casamento
-    const child1: GenogramElement = {
-      id: baseId + 3,
-      type: 'male',
-      x: centerX - childSpacing,
-      y: childrenY,
-      name: 'Filho 1',
-      age: '',
-      status: 'alive'
-    };
-    
-    const child2: GenogramElement = {
-      id: baseId + 4,
-      type: 'female',
-      x: centerX,
-      y: childrenY,
-      name: 'Filha',
-      age: '',
-      status: 'alive'
-    };
-    
-    const child3: GenogramElement = {
-      id: baseId + 5,
-      type: 'male',
-      x: centerX + childSpacing,
-      y: childrenY,
-      name: 'Filho 2',
-      age: '',
-      status: 'alive'
-    };
-    
-    // RELAÇÕES FAMILIARES
-    // Relação de casamento: linha horizontal verde conectando pai e mãe
-    const marriage: GenogramElement = {
-      id: baseId + 6,
-      type: 'relation',
-      relationType: 'marriage',
-      from: father.id,
-      to: mother.id,
-      x: 0,
-      y: 0
-    };
-    
-    // Relação de filhos: cria automaticamente a estrutura hierárquica
-    // - Linha vertical do casamento descendo
-    // - Linha horizontal conectando todos os filhos
-    // - Linhas verticais individuais para cada filho
-    // Esta relação mantém AUTOMATICAMENTE todas as conexões mesmo quando elementos são movidos
-    const childrenRelation: GenogramElement = {
-      id: baseId + 7,
-      type: 'relation',
-      relationType: 'children',
-      from: father.id,
-      to: mother.id,
-      x: 0,
-      y: 0,
-      children: [child1.id, child2.id, child3.id]
-    };
-    
-    // Adicionar todos os elementos à estrutura
-    // A ordem garante que as relações sejam desenhadas antes dos elementos
-    const newElements = [
-      father,
-      mother,
-      child1,
-      child2,
-      child3,
-      marriage,
-      childrenRelation
-    ];
-    
-    setElements(newElements);
-    setSelectedElement(null);
-    
-    toast({
-      title: "Estrutura familiar gerada!",
-      description: "Família com ligações automáticas criada. As conexões se mantêm mesmo ao mover os elementos.",
-    });
-  };
 
   const handleSendFeedback = async () => {
     if (!feedbackMessage.trim()) {
@@ -1662,7 +1534,7 @@ const Index = () => {
       <div className="bg-card shadow-sm border-b border-border">
         <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center gap-3">
-            <Users className="w-8 h-8 text-primary" />
+            <Home className="w-8 h-8 text-primary" />
             <div>
               <h1 className="text-xl font-light text-foreground">Genograma Familiar</h1>
               <p className="text-xs text-muted-foreground">
@@ -1706,14 +1578,6 @@ const Index = () => {
                   </button>
                 )}
               </div>
-              <FamilyExpertChat 
-                onGenerateGenogram={(newElements) => {
-                  setElements(newElements);
-                  setSelectedElement(null);
-                }} 
-                isButton={true}
-                currentElements={elements}
-              />
             </div>
 
             <div className="bg-card rounded-xl shadow-md p-4">
@@ -2058,15 +1922,6 @@ const Index = () => {
               <h3 className="font-medium text-foreground mb-3">Ações</h3>
               <div className="space-y-2">
                 <Button
-                  onClick={generateFamilyStructure}
-                  className="w-full bg-green-600/10 hover:bg-green-600/20 border-green-600/30 text-green-700"
-                  variant="outline"
-                  size="sm"
-                >
-                  <Users className="w-4 h-4 mr-2" />
-                  Gerar Estrutura Familiar
-                </Button>
-                <Button
                   onClick={exportToPDF}
                   className="w-full bg-muted/50 hover:bg-muted border-muted-foreground/30"
                   variant="outline"
@@ -2078,8 +1933,17 @@ const Index = () => {
                   Baixar PDF
                 </Button>
                 <Button
-                  onClick={() => setShowFeedbackModal(true)}
+                  onClick={() => setShowSupportModal(true)}
                   className="w-full bg-primary/10 hover:bg-primary/20 border-primary/30 text-primary"
+                  variant="outline"
+                  size="sm"
+                >
+                  <MessageSquare className="w-4 h-4 mr-2" />
+                  Suporte por Ticket
+                </Button>
+                <Button
+                  onClick={() => setShowFeedbackModal(true)}
+                  className="w-full bg-muted/10 hover:bg-muted/20 border-muted/30"
                   variant="outline"
                   size="sm"
                 >
@@ -2464,6 +2328,12 @@ const Index = () => {
             description: "O template foi carregado com sucesso. Você pode editá-lo agora.",
           });
         }}
+      />
+
+      {/* Support Tickets Modal */}
+      <SupportTickets 
+        open={showSupportModal} 
+        onOpenChange={setShowSupportModal}
       />
 
       {/* Quick Edit Modal */}
