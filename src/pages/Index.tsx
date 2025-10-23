@@ -72,6 +72,63 @@ const Index = () => {
   const [quickEditStatus, setQuickEditStatus] = useState<string>('alive');
   const [searchTerm, setSearchTerm] = useState('');
   const [genogramTitle, setGenogramTitle] = useState('Novo Genograma');
+  
+  // Admin blog updates
+  const isAdmin = user?.email === 'vrollsing@yahoo.com.br';
+  const [showBlogEditModal, setShowBlogEditModal] = useState(false);
+  const [editingBlogEntry, setEditingBlogEntry] = useState<number | null>(null);
+  const [blogEntries, setBlogEntries] = useState([
+    {
+      id: 1,
+      date: '22/10/2025',
+      badge: { text: 'Novo Recurso', color: 'green' },
+      title: 'Templates de Genograma',
+      description: '5 templates prontos para iniciar rapidamente: Família Nuclear, Monoparental, Três Gerações, Família Reconstruída e Casal sem Filhos. Acesse pelo botão "Templates"!'
+    },
+    {
+      id: 2,
+      date: '22/10/2025',
+      badge: { text: 'Melhorias', color: 'blue' },
+      title: 'Edição Rápida por Duplo Clique',
+      description: 'Agora você pode dar duplo clique em qualquer pessoa para editar rapidamente nome, idade e status. Muito mais ágil para preencher informações!'
+    },
+    {
+      id: 3,
+      date: '21/10/2025',
+      badge: { text: 'Em Manutenção', color: 'orange' },
+      title: 'Chat IA Temporariamente Desabilitado',
+      description: 'O recurso "Descreva sua família" está em manutenção para melhorias na precisão do reconhecimento de relações familiares. Em breve voltaremos com uma versão mais robusta!'
+    },
+    {
+      id: 4,
+      date: '20/10/2025',
+      badge: { text: 'Melhorias', color: 'blue' },
+      title: 'Sistema de Layout Hierárquico',
+      description: 'Implementamos algoritmo de layout automático que organiza famílias em gerações (avós → pais → filhos) com posicionamento inteligente e espaçamento proporcional.'
+    },
+    {
+      id: 5,
+      date: '19/10/2025',
+      badge: { text: 'Correção', color: 'purple' },
+      title: 'Relacionamentos Conjugais Corrigidos',
+      description: 'Corrigido bug onde "pais separados" eram desenhados como casados. Agora separação/divórcio é renderizado corretamente com linha vermelha e barras duplas.'
+    },
+    {
+      id: 6,
+      date: '18/10/2025',
+      badge: { text: 'Lançamento', color: 'green' },
+      title: 'Sistema de Genogramas Online',
+      description: 'Lançamento inicial do sistema com suporte a criação manual de genogramas, múltiplos tipos de relações e exportação em PDF. Bem-vindo! 🎉'
+    }
+  ]);
+  const [blogFormData, setBlogFormData] = useState({
+    date: '',
+    badgeText: '',
+    badgeColor: 'blue',
+    title: '',
+    description: ''
+  });
+  
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
@@ -420,6 +477,76 @@ const Index = () => {
         description: "As informações foram atualizadas.",
       });
     }
+  };
+
+  // Blog management functions (admin only)
+  const handleBlogEdit = (entry: typeof blogEntries[0]) => {
+    setEditingBlogEntry(entry.id);
+    setBlogFormData({
+      date: entry.date,
+      badgeText: entry.badge.text,
+      badgeColor: entry.badge.color,
+      title: entry.title,
+      description: entry.description
+    });
+    setShowBlogEditModal(true);
+  };
+
+  const handleBlogSave = () => {
+    if (editingBlogEntry !== null) {
+      setBlogEntries(prev => prev.map(entry => 
+        entry.id === editingBlogEntry 
+          ? {
+              ...entry,
+              date: blogFormData.date,
+              badge: { text: blogFormData.badgeText, color: blogFormData.badgeColor },
+              title: blogFormData.title,
+              description: blogFormData.description
+            }
+          : entry
+      ));
+      toast({
+        title: "Atualização salva",
+        description: "A entrada do blog foi atualizada com sucesso.",
+      });
+    } else {
+      // Add new entry
+      const newId = Math.max(...blogEntries.map(e => e.id), 0) + 1;
+      setBlogEntries(prev => [{
+        id: newId,
+        date: blogFormData.date,
+        badge: { text: blogFormData.badgeText, color: blogFormData.badgeColor },
+        title: blogFormData.title,
+        description: blogFormData.description
+      }, ...prev]);
+      toast({
+        title: "Nova entrada criada",
+        description: "A entrada foi adicionada ao blog de atualizações.",
+      });
+    }
+    setShowBlogEditModal(false);
+    setEditingBlogEntry(null);
+    setBlogFormData({ date: '', badgeText: '', badgeColor: 'blue', title: '', description: '' });
+  };
+
+  const handleBlogDelete = (id: number) => {
+    setBlogEntries(prev => prev.filter(entry => entry.id !== id));
+    toast({
+      title: "Entrada removida",
+      description: "A entrada do blog foi excluída.",
+    });
+  };
+
+  const handleNewBlogEntry = () => {
+    setEditingBlogEntry(null);
+    setBlogFormData({ 
+      date: new Date().toLocaleDateString('pt-BR'), 
+      badgeText: 'Novo Recurso', 
+      badgeColor: 'blue', 
+      title: '', 
+      description: '' 
+    });
+    setShowBlogEditModal(true);
   };
 
   const toggleSelection = (id: number) => {
@@ -2063,88 +2190,58 @@ const Index = () => {
 
             {/* Blog de Atualizações do Sistema */}
             <div className="bg-card rounded-xl shadow-md p-4 border-l-4 border-primary">
-              <div className="flex items-center gap-2 mb-3">
-                <MessageSquare className="w-5 h-5 text-primary" />
-                <h3 className="text-sm font-semibold text-foreground">Atualizações do Sistema</h3>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <MessageSquare className="w-5 h-5 text-primary" />
+                  <h3 className="text-sm font-semibold text-foreground">Atualizações do Sistema</h3>
+                </div>
+                {isAdmin && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleNewBlogEntry}
+                    className="h-7 text-xs"
+                  >
+                    <Plus className="w-3 h-3 mr-1" />
+                    Nova
+                  </Button>
+                )}
               </div>
               <div className="space-y-4 max-h-96 overflow-y-auto">
-                {/* Entrada 1 - Mais recente */}
-                <div className="border-l-2 border-muted pl-3 py-2">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs font-semibold text-primary">22/10/2025</span>
-                    <span className="text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded">Novo Recurso</span>
+                {blogEntries.map((entry) => (
+                  <div key={entry.id} className="border-l-2 border-muted pl-3 py-2 relative group">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-xs font-semibold text-primary">{entry.date}</span>
+                      <span className={`text-xs px-2 py-0.5 bg-${entry.badge.color}-100 text-${entry.badge.color}-700 rounded`}>
+                        {entry.badge.text}
+                      </span>
+                      {isAdmin && (
+                        <div className="ml-auto flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleBlogEdit(entry)}
+                            className="h-6 w-6 p-0"
+                          >
+                            <BookOpen className="w-3 h-3" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleBlogDelete(entry.id)}
+                            className="h-6 w-6 p-0 text-destructive"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                    <h4 className="text-sm font-medium text-foreground mb-1">{entry.title}</h4>
+                    <p className="text-xs text-muted-foreground">
+                      {entry.description}
+                    </p>
                   </div>
-                  <h4 className="text-sm font-medium text-foreground mb-1">Templates de Genograma</h4>
-                  <p className="text-xs text-muted-foreground">
-                    5 templates prontos para iniciar rapidamente: Família Nuclear, Monoparental, Três Gerações, 
-                    Família Reconstruída e Casal sem Filhos. Acesse pelo botão "Templates"!
-                  </p>
-                </div>
-
-                {/* Entrada 2 */}
-                <div className="border-l-2 border-muted pl-3 py-2">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs font-semibold text-primary">22/10/2025</span>
-                    <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded">Melhorias</span>
-                  </div>
-                  <h4 className="text-sm font-medium text-foreground mb-1">Edição Rápida por Duplo Clique</h4>
-                  <p className="text-xs text-muted-foreground">
-                    Agora você pode dar duplo clique em qualquer pessoa para editar rapidamente nome, 
-                    idade e status. Muito mais ágil para preencher informações!
-                  </p>
-                </div>
-
-                {/* Entrada 3 */}
-                <div className="border-l-2 border-muted pl-3 py-2">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs font-semibold text-primary">21/10/2025</span>
-                    <span className="text-xs px-2 py-0.5 bg-orange-100 text-orange-700 rounded">Em Manutenção</span>
-                  </div>
-                  <h4 className="text-sm font-medium text-foreground mb-1">Chat IA Temporariamente Desabilitado</h4>
-                  <p className="text-xs text-muted-foreground">
-                    O recurso "Descreva sua família" está em manutenção para melhorias na precisão do reconhecimento 
-                    de relações familiares. Em breve voltaremos com uma versão mais robusta!
-                  </p>
-                </div>
-
-                {/* Entrada 4 */}
-                <div className="border-l-2 border-muted pl-3 py-2">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs font-semibold text-primary">20/10/2025</span>
-                    <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded">Melhorias</span>
-                  </div>
-                  <h4 className="text-sm font-medium text-foreground mb-1">Sistema de Layout Hierárquico</h4>
-                  <p className="text-xs text-muted-foreground">
-                    Implementamos algoritmo de layout automático que organiza famílias em gerações (avós → pais → filhos) 
-                    com posicionamento inteligente e espaçamento proporcional.
-                  </p>
-                </div>
-
-                {/* Entrada 5 */}
-                <div className="border-l-2 border-muted pl-3 py-2">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs font-semibold text-primary">19/10/2025</span>
-                    <span className="text-xs px-2 py-0.5 bg-purple-100 text-purple-700 rounded">Correção</span>
-                  </div>
-                  <h4 className="text-sm font-medium text-foreground mb-1">Relacionamentos Conjugais Corrigidos</h4>
-                  <p className="text-xs text-muted-foreground">
-                    Corrigido bug onde "pais separados" eram desenhados como casados. 
-                    Agora separação/divórcio é renderizado corretamente com linha vermelha e barras duplas.
-                  </p>
-                </div>
-
-                {/* Entrada 6 */}
-                <div className="border-l-2 border-muted pl-3 py-2">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs font-semibold text-primary">18/10/2025</span>
-                    <span className="text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded">Lançamento</span>
-                  </div>
-                  <h4 className="text-sm font-medium text-foreground mb-1">Sistema de Genogramas Online</h4>
-                  <p className="text-xs text-muted-foreground">
-                    Lançamento inicial do sistema com suporte a criação manual de genogramas, 
-                    múltiplos tipos de relações e exportação em PDF. Bem-vindo! 🎉
-                  </p>
-                </div>
+                ))}
               </div>
               <p className="text-xs text-muted-foreground mt-3 pt-3 border-t">
                 💡 Sugestões? Use o botão "Feedback do Sistema" na barra lateral
@@ -2486,6 +2583,98 @@ const Index = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Blog Edit Modal (Admin Only) */}
+      {isAdmin && (
+        <Dialog open={showBlogEditModal} onOpenChange={setShowBlogEditModal}>
+          <DialogContent className="sm:max-w-[525px]">
+            <DialogHeader>
+              <DialogTitle>
+                {editingBlogEntry ? 'Editar Entrada do Blog' : 'Nova Entrada do Blog'}
+              </DialogTitle>
+              <DialogDescription>
+                {editingBlogEntry ? 'Atualize as informações da entrada' : 'Crie uma nova atualização para o sistema'}
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="blog-date">Data</Label>
+                <Input
+                  id="blog-date"
+                  value={blogFormData.date}
+                  onChange={(e) => setBlogFormData(prev => ({ ...prev, date: e.target.value }))}
+                  placeholder="DD/MM/AAAA"
+                />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="blog-badge-text">Categoria</Label>
+                  <Input
+                    id="blog-badge-text"
+                    value={blogFormData.badgeText}
+                    onChange={(e) => setBlogFormData(prev => ({ ...prev, badgeText: e.target.value }))}
+                    placeholder="Ex: Novo Recurso"
+                  />
+                </div>
+                
+                <div className="grid gap-2">
+                  <Label htmlFor="blog-badge-color">Cor da Badge</Label>
+                  <Select 
+                    value={blogFormData.badgeColor} 
+                    onValueChange={(value) => setBlogFormData(prev => ({ ...prev, badgeColor: value }))}
+                  >
+                    <SelectTrigger id="blog-badge-color">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="blue">Azul (Melhorias)</SelectItem>
+                      <SelectItem value="green">Verde (Novo Recurso)</SelectItem>
+                      <SelectItem value="orange">Laranja (Manutenção)</SelectItem>
+                      <SelectItem value="purple">Roxo (Correção)</SelectItem>
+                      <SelectItem value="red">Vermelho (Crítico)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              
+              <div className="grid gap-2">
+                <Label htmlFor="blog-title">Título</Label>
+                <Input
+                  id="blog-title"
+                  value={blogFormData.title}
+                  onChange={(e) => setBlogFormData(prev => ({ ...prev, title: e.target.value }))}
+                  placeholder="Título da atualização"
+                />
+              </div>
+              
+              <div className="grid gap-2">
+                <Label htmlFor="blog-description">Descrição</Label>
+                <Textarea
+                  id="blog-description"
+                  value={blogFormData.description}
+                  onChange={(e) => setBlogFormData(prev => ({ ...prev, description: e.target.value }))}
+                  placeholder="Descreva a atualização em detalhes..."
+                  rows={4}
+                />
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowBlogEditModal(false)}>
+                Cancelar
+              </Button>
+              <Button 
+                onClick={handleBlogSave}
+                disabled={!blogFormData.title || !blogFormData.description}
+              >
+                {editingBlogEntry ? 'Atualizar' : 'Criar Entrada'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 };
