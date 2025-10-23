@@ -248,7 +248,7 @@ const Auth = () => {
           ) : (
             <div className="bg-gradient-to-r from-primary/10 to-accent/10 rounded-lg p-4 border-2 border-primary/20">
               <p className="text-primary font-medium text-center">
-                🎁 Teste grátis de 3 dias do Plano Básico ao criar sua conta!
+                🎁 Teste grátis de 3 dias ao criar sua conta!
               </p>
             </div>
           )}
