@@ -60,6 +60,7 @@ const Index = () => {
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [showLoadModal, setShowLoadModal] = useState(false);
   const [showTemplatesModal, setShowTemplatesModal] = useState(false);
+  const [showManageTutorialModal, setShowManageTutorialModal] = useState(false);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [feedbackMessage, setFeedbackMessage] = useState('');
   const [feedbackEmail, setFeedbackEmail] = useState('');
@@ -1809,6 +1810,16 @@ const Index = () => {
                   <BookOpen className="w-4 h-4 mr-2" />
                   Templates
                 </Button>
+                <Button
+                  onClick={() => setShowManageTutorialModal(true)}
+                  className="w-full"
+                  variant="outline"
+                  size="sm"
+                  disabled={isTrialExpired}
+                >
+                  <BookOpen className="w-4 h-4 mr-2" />
+                  Tutorial
+                </Button>
               </div>
             </div>
 
@@ -2270,6 +2281,65 @@ const Index = () => {
         </DialogContent>
       </Dialog>
 
+      {/* Manage tutorial modal: mini how-to for adding people and relationships */}
+      <Dialog open={showManageTutorialModal} onOpenChange={setShowManageTutorialModal}>
+        <DialogContent className="sm:max-w-[700px]">
+          <DialogHeader>
+            <DialogTitle>Mini Tutorial — Como adicionar pessoas e relações</DialogTitle>
+            <DialogDescription>
+              Passo a passo rápido para criar pessoas, editar e desenhar relações no genograma.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4 text-sm">
+            <div>
+              <h4 className="font-semibold">1) Adicionar pessoas</h4>
+              <p className="text-xs text-muted-foreground">
+                Use a seção "Adicionar Pessoa" no painel esquerdo. Clique no tipo desejado (Masculino, Feminino, Gravidez, Pet, etc.)
+                para inserir a pessoa no centro do quadro. Arraste a pessoa para posicioná-la onde preferir.
+              </p>
+            </div>
+
+            <div>
+              <h4 className="font-semibold">2) Editar informações</h4>
+              <p className="text-xs text-muted-foreground">
+                Para alterar nome, idade ou status, dê <strong>duplo clique</strong> na pessoa para abrir a edição rápida.
+                Você também pode selecionar a pessoa e usar o painel de propriedades para ajustes e para excluir.
+              </p>
+            </div>
+
+            <div>
+              <h4 className="font-semibold">3) Criar relações</h4>
+              <p className="text-xs text-muted-foreground">
+                Selecione as pessoas necessárias clicando nelas (elas ficarão destacadas). Em "Relações", escolha o botão
+                adequado (Casamento, Filhos, Divórcio, etc.).
+                Observação: para <em>Filhos</em> selecione pelo menos 3 pessoas (2 pais + 1 filho),
+                para outras relações selecione exatamente 2 pessoas.
+              </p>
+            </div>
+
+            <div>
+              <h4 className="font-semibold">4) Mover e ajustar</h4>
+              <p className="text-xs text-muted-foreground">
+                Arraste pessoas para reorganizar. Reposicione relações arrastando os pontos de ancoragem se necessário. Use o botão
+                "Limpar Tela" para começar do zero quando precisar.
+              </p>
+            </div>
+
+            <div>
+              <h4 className="font-semibold">Dica rápida</h4>
+              <p className="text-xs text-muted-foreground">
+                Use a busca para localizar pessoas por nome. Experimente os templates para começar com estruturas comuns rapidamente.
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowManageTutorialModal(false)}>Fechar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={showSaveModal} onOpenChange={setShowSaveModal}>
         <DialogContent>
           <DialogHeader>
@@ -2675,7 +2745,7 @@ const Index = () => {
           </DialogContent>
         </Dialog>
       )}
-    </div>
+      </div>
   );
 };
 
