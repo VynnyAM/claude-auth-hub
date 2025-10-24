@@ -2298,6 +2298,18 @@ const Index = () => {
                 Use a seção "Adicionar Pessoa" no painel esquerdo. Clique no tipo desejado (Masculino, Feminino, Gravidez, Pet, etc.)
                 para inserir a pessoa no centro do quadro. Arraste a pessoa para posicioná-la onde preferir.
               </p>
+              {/* Ilustração: caixa representando pessoa + seta de arraste */}
+              <div className="mt-2">
+                <svg width="160" height="60" viewBox="0 0 160 60" xmlns="http://www.w3.org/2000/svg" className="rounded-md shadow-sm">
+                  {/* pessoa (retângulo) */}
+                  <rect x="8" y="10" width="40" height="40" rx="6" fill="#dbeafe" stroke="#3b82f6" strokeWidth="2" />
+                  <text x="28" y="36" fontSize="10" textAnchor="middle" fill="#1e293b">Pessoa</text>
+                  {/* seta de arraste */}
+                  <path d="M60 30 L110 30" stroke="#10b981" strokeWidth="3" strokeLinecap="round" />
+                  <path d="M102 24 L110 30 L102 36" fill="#10b981" />
+                  <text x="85" y="20" fontSize="11" textAnchor="middle" fill="#065f46">Arraste</text>
+                </svg>
+              </div>
             </div>
 
             <div>
@@ -2316,6 +2328,20 @@ const Index = () => {
                 Observação: para <em>Filhos</em> selecione pelo menos 3 pessoas (2 pais + 1 filho),
                 para outras relações selecione exatamente 2 pessoas.
               </p>
+              {/* Ilustração: duas pessoas conectadas por uma linha de relação */}
+              <div className="mt-2">
+                <svg width="220" height="70" viewBox="0 0 220 70" xmlns="http://www.w3.org/2000/svg">
+                  {/* pessoa esquerda (círculo) */}
+                  <circle cx="50" cy="35" r="20" fill="#fce7f3" stroke="#ec4899" strokeWidth="2" />
+                  <text x="50" y="40" fontSize="10" textAnchor="middle" fill="#701a75">Ana</text>
+                  {/* pessoa direita (retângulo) */}
+                  <rect x="130" y="15" width="40" height="40" rx="6" fill="#dbeafe" stroke="#3b82f6" strokeWidth="2" />
+                  <text x="150" y="40" fontSize="10" textAnchor="middle" fill="#0f172a">João</text>
+                  {/* linha de relação */}
+                  <line x1="78" y1="35" x2="130" y2="35" stroke="#64748b" strokeWidth="3" strokeLinecap="round" />
+                  <text x="104" y="24" fontSize="11" textAnchor="middle" fill="#334155">Casamento</text>
+                </svg>
+              </div>
             </div>
 
             <div>
