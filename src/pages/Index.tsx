@@ -80,6 +80,13 @@ const Index = () => {
   const [editingBlogEntry, setEditingBlogEntry] = useState<number | null>(null);
   const [blogEntries, setBlogEntries] = useState([
     {
+      id: 7,
+      date: '24/10/2025',
+      badge: { text: 'Novo Recurso', color: 'green' },
+      title: 'Sistema de Tutorial Implementado',
+      description: 'Adicionado sistema de tutorial interativo — abra Gerenciar → Tutorial para ver instruções passo a passo, ilustrações e dicas rápidas para adicionar pessoas e criar relações.'
+    },
+    {
       id: 1,
       date: '22/10/2025',
       badge: { text: 'Novo Recurso', color: 'green' },
