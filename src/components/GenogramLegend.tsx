@@ -53,6 +53,16 @@ export const GenogramLegend = ({ open, onOpenChange }: GenogramLegendProps) => {
                     <p className="text-sm text-muted-foreground">Representada por um hexágono roxo</p>
                   </div>
                 </div>
+                
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 border-2 border-pink-500 bg-pink-500/20 flex items-center justify-center" style={{ clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)' }}>
+                    <span className="text-xs font-bold">▲</span>
+                  </div>
+                  <div>
+                    <p className="font-medium">Pessoa Homossexual</p>
+                    <p className="text-sm text-muted-foreground">Representada por um triângulo rosa</p>
+                  </div>
+                </div>
               </div>
             </div>
 

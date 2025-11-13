@@ -4,7 +4,7 @@ import { useToast } from '@/hooks/use-toast';
 
 export interface GenogramElement {
   id: number;
-  type: string; // 'male', 'female', 'pregnancy', 'undefined', 'twins', 'fraternal-twins', 'identical-twins', 'pet', 'relation'
+  type: string; // 'male', 'female', 'pregnancy', 'undefined', 'twins', 'fraternal-twins', 'identical-twins', 'pet', 'homosexual', 'relation'
   x: number;
   y: number;
   name?: string;

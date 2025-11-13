@@ -1331,6 +1331,17 @@ const Index = () => {
         ctx.fill();
         ctx.strokeStyle = element.selected ? '#10b981' : '#10b981';
         ctx.stroke();
+      } else if (element.type === 'homosexual') {
+        // Pessoa homossexual (triângulo rosa)
+        ctx.fillStyle = element.status === 'deceased' ? '#cbd5e1' : '#fce7f3';
+        ctx.beginPath();
+        ctx.moveTo(element.x, element.y - 25);
+        ctx.lineTo(element.x + 25, element.y + 25);
+        ctx.lineTo(element.x - 25, element.y + 25);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = element.selected ? '#10b981' : '#ec4899';
+        ctx.stroke();
       }
 
       // Status especiais - aplicar primeiro para não sobrepor
@@ -1343,6 +1354,13 @@ const Index = () => {
         } else if (element.type === 'female') {
           ctx.beginPath();
           ctx.arc(element.x, element.y, 28, 0, 2 * Math.PI);
+          ctx.stroke();
+        } else if (element.type === 'homosexual') {
+          ctx.beginPath();
+          ctx.moveTo(element.x, element.y - 28);
+          ctx.lineTo(element.x + 28, element.y + 28);
+          ctx.lineTo(element.x - 28, element.y + 28);
+          ctx.closePath();
           ctx.stroke();
         }
       }
@@ -1373,6 +1391,16 @@ const Index = () => {
           ctx.fill();
           ctx.strokeStyle = element.selected ? '#10b981' : '#ec4899';
           ctx.stroke();
+        } else if (element.type === 'homosexual') {
+          ctx.fillStyle = '#000000';
+          ctx.beginPath();
+          ctx.moveTo(element.x, element.y - 25);
+          ctx.lineTo(element.x + 25, element.y + 25);
+          ctx.lineTo(element.x - 25, element.y + 25);
+          ctx.closePath();
+          ctx.fill();
+          ctx.strokeStyle = element.selected ? '#10b981' : '#ec4899';
+          ctx.stroke();
         }
       }
       
@@ -1385,6 +1413,14 @@ const Index = () => {
           ctx.fillStyle = '#000000';
           ctx.beginPath();
           ctx.arc(element.x, element.y, 25, 0, Math.PI);
+          ctx.fill();
+        } else if (element.type === 'homosexual') {
+          ctx.fillStyle = '#000000';
+          ctx.beginPath();
+          ctx.moveTo(element.x, element.y);
+          ctx.lineTo(element.x + 25, element.y + 25);
+          ctx.lineTo(element.x - 25, element.y + 25);
+          ctx.closePath();
           ctx.fill();
         }
       }
@@ -1403,6 +1439,14 @@ const Index = () => {
           ctx.fillStyle = '#000000';
           ctx.fill();
           ctx.restore();
+        } else if (element.type === 'homosexual') {
+          ctx.fillStyle = '#000000';
+          ctx.beginPath();
+          ctx.moveTo(element.x, element.y - 25);
+          ctx.lineTo(element.x - 25, element.y + 25);
+          ctx.lineTo(element.x, element.y);
+          ctx.closePath();
+          ctx.fill();
         }
       }
       
@@ -1533,6 +1577,13 @@ const Index = () => {
             if (i === 0) ctx.moveTo(x, y);
             else ctx.lineTo(x, y);
           }
+          ctx.closePath();
+          ctx.stroke();
+        } else if (element.type === 'homosexual') {
+          ctx.beginPath();
+          ctx.moveTo(element.x, element.y - 30);
+          ctx.lineTo(element.x + 30, element.y + 30);
+          ctx.lineTo(element.x - 30, element.y + 30);
           ctx.closePath();
           ctx.stroke();
         }
@@ -1906,6 +1957,15 @@ const Index = () => {
                   disabled={isTrialExpired}
                 >
                   🐾 Animal de Estimação
+                </Button>
+                <Button
+                  onClick={() => addElement('homosexual')}
+                  className="w-full bg-pink-500/10 hover:bg-pink-500/20 border-pink-500/30 text-pink-700"
+                  variant="outline"
+                  size="sm"
+                  disabled={isTrialExpired}
+                >
+                  🏳️‍🌈 Homossexual
                 </Button>
               </div>
             </div>
